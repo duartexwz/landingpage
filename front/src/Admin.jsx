@@ -127,9 +127,9 @@ export default function Admin() {
             <a className="admin-voltar" href="/">← voltar ao site</a>
           </form>
         </div>
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="admin-wrap wide">
@@ -339,6 +339,8 @@ function EditarLanding({ token }) {
   const [editDep, setEditDep] = useState({});
   const [excluirProj, setExcluirProj] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
+  const [projCriado, setProjCriado] = useState(null);
+  const [adicionando, setAdicionando] = useState(false);
 
   const carregarTudo = async () => {
     try {
@@ -355,15 +357,19 @@ function EditarLanding({ token }) {
   useEffect(() => { carregarTudo(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!excluirProj) return;
+    if (!excluirProj && !projCriado) return;
     document.body.style.overflow = 'hidden';
-    const fechar = (e) => { if (e.key === 'Escape') setExcluirProj(null); };
+    const fechar = (e) => {
+      if (e.key !== 'Escape' || excluindo || adicionando) return;
+      setExcluirProj(null);
+      setProjCriado(null);
+    };
     window.addEventListener('keydown', fechar);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', fechar);
     };
-  }, [excluirProj]);
+  }, [excluirProj, projCriado, excluindo, adicionando]);
 
   const ok = (t) => { setMsg(`✅ ${t}`); setTimeout(() => setMsg(''), 2500); };
 
@@ -409,6 +415,31 @@ function EditarLanding({ token }) {
     } catch (e) { setMsg(e.message); }
   };
 
+  // Salvar de um projeto existente só habilita após alguma alteração
+  const projSujo = (p) => !!editProj[p.id];
+
+  // Form "novo projeto": sujo se qualquer campo foi preenchido
+  const novoProjSujo = [
+    novoProj.titulo, novoProj.problema, novoProj.solucao, novoProj.link_url,
+    novoProj.linguagens, novoProj.como_foi_feito, novoProj.estrutura_pastas,
+    novoProj.capa_url,
+  ].some((v) => (v || '').trim()) || (novoProj.imagens || []).length > 0;
+
+  const adicionarProj = async () => {
+    if (!novoProj.titulo.trim()) { alert('Título é obrigatório'); return; }
+    setAdicionando(true);
+    try {
+      const criado = await api.criarProjeto(token, novoProj);
+      setProjetos((xs) => [...xs, criado]);
+      setNovoProj(PROJ_VAZIO);
+      setProjCriado(criado);
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setAdicionando(false);
+    }
+  };
+
   return (
     <div className="edit-wrap">
       {msg && <div className="admin-erro" style={{ marginBottom: 12 }}>{msg}</div>}
@@ -440,7 +471,7 @@ function EditarLanding({ token }) {
             <div className="edit-row">
               <input type="number" value={ep(p, 'ordem')} onChange={(e) => sp(p.id, 'ordem', Number(e.target.value))} title="Ordem" />
               <label className="check"><input type="checkbox" checked={!!(editProj[p.id]?.ativo ?? p.ativo)} onChange={(e) => sp(p.id, 'ativo', e.target.checked)} /> visível</label>
-              <button className="btn-primary sm" onClick={() => salvarProj(p)}>Salvar</button>
+              <button className="btn-primary sm" onClick={() => salvarProj(p)} disabled={!projSujo(p)}>Salvar</button>
               <button className="danger sm" onClick={() => setExcluirProj(p)}>Remover</button>
             </div>
           </div>
@@ -458,13 +489,9 @@ function EditarLanding({ token }) {
           <input value={novoProj.linguagens} onChange={(e) => setNovoProj({ ...novoProj, linguagens: e.target.value })} placeholder="Linguagens (ex: Python, FastAPI, React)" />
           <textarea className="mono-area" value={novoProj.como_foi_feito} onChange={(e) => setNovoProj({ ...novoProj, como_foi_feito: e.target.value })} placeholder="Como foi feito (quase um README…)" />
           <textarea className="mono-area" value={novoProj.estrutura_pastas} onChange={(e) => setNovoProj({ ...novoProj, estrutura_pastas: e.target.value })} placeholder={'Estrutura de pastas (ex:\napi/\n  routers/\nfront/\n  src/)'} />
-          <button className="btn-primary sm" onClick={async () => {
-            if (!novoProj.titulo) { alert('Título é obrigatório'); return; }
-            const criado = await api.criarProjeto(token, novoProj);
-            setProjetos((xs) => [...xs, criado]);
-            setNovoProj(PROJ_VAZIO);
-            ok('Projeto adicionado!');
-          }}>Adicionar projeto</button>
+          <button className="btn-primary sm" onClick={adicionarProj} disabled={!novoProjSujo || adicionando}>
+            {adicionando ? 'Adicionando…' : 'Adicionar projeto'}
+          </button>
         </div>
       </section>
 
@@ -542,6 +569,26 @@ function EditarLanding({ token }) {
               <button className="btn-danger sm" onClick={confirmarExcluirProj} disabled={excluindo}>
                 {excluindo ? 'Excluindo…' : 'Sim, excluir'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {projCriado && (
+        <div className="confirm-overlay" onClick={() => setProjCriado(null)}>
+          <div className="confirm-modal success" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-icon ok">✓</div>
+            <h3>Projeto adicionado!</h3>
+            <p>
+              <strong>“{projCriado.titulo}”</strong> já está visível no portfólio da landing.
+            </p>
+            <div className="confirm-actions">
+              <button className="btn-outline sm" onClick={() => setProjCriado(null)}>
+                Fechar
+              </button>
+              <a className="btn-primary sm" href="/#portfolio" target="_blank" rel="noreferrer">
+                Ver na landing →
+              </a>
             </div>
           </div>
         </div>
