@@ -1,17 +1,59 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from './lib/api.js'
 import { waLink } from './lib/config.js'
+import fotoFallback from './assets/WhatsApp Image 2026-08-29 at 15.46.44.jpeg'
 import './App.css'
+
+// Fallback caso a API esteja fora — mesmo conteúdo do seed do banco.
+const FALLBACK_PROJETOS = [
+  { id: 'f1', titulo: 'Sistema de agendamento de eventos', problema: 'marcação de eventos sem organização, com falta de planejamento e mais.', solucao: 'sistema de agendamento externo e interno, com painel de controle, cadastro de usuarios, acompanhamento de solicitação, etc..', imagem_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=60' },
+  { id: 'f2', titulo: 'Loja de Vendas Online', problema: 'vendas por whatsapp, alta demanda de atendimento e entrega.', solucao: 'Sistema de compras online, com pagamento confiável pelo Mercado Pago, gestão de pedidos, produtos e entregas.', imagem_url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=60' },
+  { id: 'f3', titulo: 'Landing de Captação', problema: 'conversão baixa.', solucao: 'página rápida que dobrou leads qualificados.', imagem_url: '' },
+];
+const FALLBACK_DEPS = [
+  { id: 'd1', texto: 'O painel reduziu 90% do nosso trabalho manual de fechamento. Roda sozinho.', nome: 'Marina Costa', cargo: 'COO · Vetor Log', avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60' },
+  { id: 'd2', texto: 'API enxuta e documentada. Integração levou dias, não meses.', nome: 'Diego Ramos', cargo: 'Head de Produto · Nuvem', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60' },
+  { id: 'd3', texto: 'A landing dobrou nossos leads qualificados na primeira quinzena.', nome: 'Paula Menezes', cargo: 'Fundadora · Karta', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60' },
+];
+const FALLBACK_BIO = { titulo: 'Lógica de engenharia,\nresultado de negócio.', texto: 'Acredito que todo processo repetitivo é um sistema esperando ser construído. Uso Python e arquitetura limpa para transformar dor operacional em software que escala — com medição, teste e deploy sem surpresas.', sub: 'Eficiência operacional através de automações, integrações e infraestrutura para operações que não podem parar.' };
+const FALLBACK_FOTO = fotoFallback;
+
+// Faixa de valor padrão para cada tipo de projeto — ao trocar o tipo,
+// o select de orçamento já carrega o valor correspondente.
+const ORCAMENTO_POR_PROJETO = {
+  'Desenvolvimento de APIs': 'R$ 2k - 3,5k',
+  'Landing Pages': 'R$ 800 - 1k',
+  'Web Apps': 'R$ 3k - 5k',
+  'Automações de Processos': 'R$ 3k - 6k',
+  'Outro': 'Ainda não sei (sob consulta)',
+};
+const FORM_INICIAL = {nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento: ORCAMENTO_POR_PROJETO['Desenvolvimento de APIs'], mensagem:''};
 
 export default function App(){
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [faqOpen, setFaqOpen] = useState(1) // second item open as in prototype
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento:'R$ 5k - 15k', mensagem:''})
+  const [form, setForm] = useState(FORM_INICIAL)
   const [sent, setSent] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [site, setSite] = useState(null)
+  const [caseAberto, setCaseAberto] = useState(null)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [fb, setFb] = useState({nome:'', cargo:'', texto:''})
+  const [fbSent, setFbSent] = useState(false)
+  const [fbErro, setFbErro] = useState('')
+  const [fbEnviando, setFbEnviando] = useState(false)
+
+  useEffect(()=>{
+    api.obterSite().then(setSite).catch(()=>{});
+  },[])
+
+  const projetos = site?.projetos?.length ? site.projetos : FALLBACK_PROJETOS;
+  const depoimentos = site?.depoimentos?.length ? site.depoimentos : FALLBACK_DEPS;
+  const bio = site?.bio || FALLBACK_BIO;
+  const foto = site?.foto_url || FALLBACK_FOTO;
 
   useEffect(()=>{
     const onScroll = ()=> setScrolled(window.scrollY>10)
@@ -22,6 +64,34 @@ export default function App(){
   useEffect(()=>{
     document.body.style.overflow = modalOpen ? 'hidden' : ''
   },[modalOpen])
+
+  useEffect(()=>{
+    document.body.style.overflow = caseAberto ? 'hidden' : ''
+  },[caseAberto])
+
+  useEffect(()=>{
+    document.body.style.overflow = feedbackOpen ? 'hidden' : ''
+  },[feedbackOpen])
+
+  const handleFeedback = async (e)=>{
+    e.preventDefault()
+    if(!fb.nome || !fb.texto){ setFbErro('Preencha nome e feedback'); return }
+    setFbErro(''); setFbEnviando(true)
+    try {
+      await api.enviarDepoimento({ nome: fb.nome, cargo: fb.cargo, texto: fb.texto })
+      setFbSent(true)
+      setFb({nome:'', cargo:'', texto:''})
+    } catch(err) {
+      setFbErro(err.message || 'Falha ao enviar.')
+    } finally {
+      setFbEnviando(false)
+    }
+  }
+
+  const handleProjetoChange = (e)=>{
+    const projeto = e.target.value
+    setForm({...form, projeto, orcamento: ORCAMENTO_POR_PROJETO[projeto] || form.orcamento})
+  }
 
   const handleSubmit = async (e)=>{
     e.preventDefault()
@@ -35,7 +105,7 @@ export default function App(){
         orcamento_estimado: form.orcamento, mensagem: form.mensagem, consent_lgpd: true,
       })
       setSent(true)
-      setTimeout(()=>{ setSent(false); setModalOpen(false); setForm({nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento:'R$ 5k - 15k', mensagem:''}) }, 2500)
+      setTimeout(()=>{ setSent(false); setModalOpen(false); setForm(FORM_INICIAL) }, 2500)
     } catch(err) {
       setErro(err.message || 'Falha ao enviar. Tente pelo WhatsApp.')
     } finally {
@@ -51,6 +121,7 @@ export default function App(){
           <a href="#" className="logo"><span className="logo-dot"/> mayckon.dev</a>
           <nav className="nav">
             <a href="#portfolio">Portfólio</a>
+            <a href="#habilidades">Habilidades</a>
             <a href="#servicos">Serviços</a>
             <a href="#faq">FAQ</a>
           </nav>
@@ -62,6 +133,7 @@ export default function App(){
         <div className="container">
           <div className={`mobile-nav ${mobileOpen?'open':''}`}>
             <a href="#portfolio" onClick={()=>setMobileOpen(false)}>Portfólio</a>
+            <a href="#habilidades" onClick={()=>setMobileOpen(false)}>Habilidades</a>
             <a href="#servicos" onClick={()=>setMobileOpen(false)}>Serviços</a>
             <a href="#faq" onClick={()=>setMobileOpen(false)}>FAQ</a>
             <button className="btn-primary" onClick={()=>{setMobileOpen(false);setModalOpen(true)}}>Solicitar Orçamento</button>
@@ -119,51 +191,30 @@ export default function App(){
           <div className="eyebrow">(A) PORTFÓLIO</div>
           <h2 className="section-title">Problemas reais,<br/>soluções que rodam.</h2>
           <div className="portfolio-grid">
-            {/* CARD 1 */}
-            <article className="p-card">
-              <div className="p-img">
-                <div className="p-img-inner">
-                  <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=60" alt="Sistema de Gestão" loading="lazy"/>
-                </div>
-              </div>
-              <div className="p-body">
-                <h3>Sistema de agendamento de eventos</h3>
-                <p><b>Problema:</b> marcação de eventos sem organização, com falta de planejamento e mais. <b> Solução:</b> sistema de agendamento externo e interno, com painel de controle, cadastro de usuarios, acompanhamento de solicitação, etc..</p>
-                <a href="#" className="p-link" onClick={e=>e.preventDefault()}>Ver case completo →</a>
-              </div>
-            </article>
-            {/* CARD 2 */}
-            <article className="p-card">
-              <div className="p-img">
-                <div className="p-img-inner" style={{background:'#0E1020'}}>
-                  <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&auto=format&fit=crop&q=60" alt="API Conciliação" style={{opacity:.9}} loading="lazy"/>
-                </div>
-              </div>
-              <div className="p-body">
-                <h3>Loja de Vendas Online</h3>
-                <p><b>Problema:</b> vendas por whatsapp, alta demanda de atendimento e entrega. <b> Solução:</b> Sistema de compras online, com pagamento confiável pelo Mercado Pago, gestão de pedidos, produtos e entregas.</p>
-                <a href="#" className="p-link" onClick={e=>e.preventDefault()}>Ver case completo →</a>
-              </div>
-            </article>
-            {/* CARD 3 */}
-            <article className="p-card">
-              <div className="p-img">
-                <div className="p-img-inner" style={{background:'#111'}}>
-                  <div style={{width:'100%',height:'100%',display:'grid',placeItems:'center',background:'#0B0B1A',color:'white',padding:16}}>
-                    <div style={{textAlign:'left',width:'100%'}}>
-                      <div style={{fontSize:11,opacity:.6,marginBottom:8}}>© Capmart</div>
-                      <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>Latre errerence</div>
-                      <div style={{width:70,height:8,background:'#9B6BFF',borderRadius:4,marginTop:10}}/>
-                    </div>
+            {projetos.map((p)=>{
+              const capa = p.capa_url || p.imagem_url;
+              return (
+              <article key={p.id} className="p-card">
+                <div className="p-img">
+                  <div className="p-img-inner">
+                    {capa
+                      ? <img src={capa} alt={p.titulo} loading="lazy"/>
+                      : <div style={{width:'100%',height:'100%',display:'grid',placeItems:'center',background:'#0B0B1A',color:'white',padding:16}}>
+                          <div style={{textAlign:'left',width:'100%'}}>
+                            <div style={{fontSize:13,fontWeight:700,marginBottom:6}}>{p.titulo}</div>
+                            <div style={{width:70,height:8,background:'#9B6BFF',borderRadius:4,marginTop:10}}/>
+                          </div>
+                        </div>}
                   </div>
                 </div>
-              </div>
-              <div className="p-body">
-                <h3>Landing de Captação</h3>
-                <p><b>Problema:</b> conversão baixa. <b className="cyan">Solução:</b> página rápida que dobrou leads qualificados.</p>
-                <a href="#" className="p-link" onClick={e=>e.preventDefault()}>Ver case completo →</a>
-              </div>
-            </article>
+                <div className="p-body">
+                  <h3>{p.titulo}</h3>
+                  <p><b>Problema:</b> {p.problema} <b> Solução:</b> {p.solucao}</p>
+                  <button className="p-link" style={{background:'none',border:'none',cursor:'pointer',padding:0}} onClick={()=>setCaseAberto(p)}>Ver case completo →</button>
+                </div>
+              </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -172,37 +223,55 @@ export default function App(){
       <section id="sobre" className="section" style={{paddingTop:0}}>
         <div className="container about-grid">
           <div className="about-photo">
-            <img src="/src/assets/WhatsApp Image 2026-08-29 at 15.46.44.jpeg" alt="Mayckon - foto profissional"/>
+            <img src={foto} alt="Mayckon - foto profissional"/>
           </div>
           <div className="about-content">
             <div className="eyebrow">(B) SOBRE MIM</div>
-            <h2>Lógica de engenharia,<br/>resultado de negócio.</h2>
-            <p>Acredito que todo processo repetitivo é um sistema esperando ser construído. Uso Python e arquitetura limpa para transformar dor operacional em software que escala — com medição, teste e deploy sem surpresas.</p>
-            <p className="sub">Eficiência operacional através de automações, integrações e infraestrutura para operações que não podem parar.</p>
+            <h2>{bio.titulo.split('\n').map((l,i)=>(<span key={i}>{l}{i===0 && <br/>}</span>))}</h2>
+            <p>{bio.texto}</p>
+            {!!bio.sub && <p className="sub">{bio.sub}</p>}
           </div>
+        </div>
+      </section>
+
+      {/* HABILIDADES */}
+      <section id="habilidades" className="section" style={{paddingTop:0}}>
+        <div className="container">
+          <div className="eyebrow">(C) HABILIDADES</div>
+          <h2 className="section-title">Stack que entrega.</h2>
+          <Habilidades />
         </div>
       </section>
 
       {/* SERVIÇOS */}
       <section id="servicos" className="section">
         <div className="container">
-          <div className="eyebrow">(C) SERVIÇOS</div>
-          <h2 className="section-title">Três frentes, um objetivo: menos trabalho manual.</h2>
+          <div className="eyebrow">(D) SERVIÇOS</div>
+          <h2 className="section-title">Quatro frentes, um objetivo: menos trabalho manual.</h2>
           <div className="services-grid">
             <div className="s-card">
               <div className="s-num">01</div>
               <h3>Desenvolvimento de APIs</h3>
               <p>Integrações e backend escalável, documentado e pronto para receber tráfego real.</p>
+              <div className="s-price">R$ 2k – R$ 3,5k</div>
             </div>
             <div className="s-card">
               <div className="s-num">02</div>
-              <h3>Automações de Processos</h3>
-              <p>Scripts e pipelines que eliminam tarefas repetitivas e reduzem retrabalho.</p>
+              <h3>Landing Pages</h3>
+              <p>Páginas rápidas e otimizadas para conversão, prontas para captar leads.</p>
+              <div className="s-price">R$ 800 – R$ 1k</div>
             </div>
             <div className="s-card">
               <div className="s-num">03</div>
-              <h3>Landing Pages & Web Apps</h3>
-              <p>Interfaces rápidas integradas a banco de dados, prontas para converter.</p>
+              <h3>Web Apps</h3>
+              <p>Aplicações completas integradas a banco de dados, com painel e autenticação.</p>
+              <div className="s-price">R$ 3k – R$ 5k</div>
+            </div>
+            <div className="s-card">
+              <div className="s-num">04</div>
+              <h3>Automações de Processos</h3>
+              <p>Scripts e pipelines que eliminam tarefas repetitivas e reduzem retrabalho.</p>
+              <div className="s-price">R$ 3k – R$ 6k</div>
             </div>
           </div>
         </div>
@@ -211,7 +280,7 @@ export default function App(){
       {/* COMO FUNCIONA */}
       <section className="section" style={{paddingTop:0}}>
         <div className="container">
-          <div className="eyebrow">(D) COMO FUNCIONA</div>
+          <div className="eyebrow">(E) COMO FUNCIONA</div>
           <h2 className="section-title">Do briefing ao deploy, em 4 passos.</h2>
           <div className="steps">
             <div className="step">
@@ -241,30 +310,21 @@ export default function App(){
       {/* DEPOIMENTOS */}
       <section className="section" style={{paddingTop:0}}>
         <div className="container">
-          <div className="eyebrow">(E) DEPOIMENTOS</div>
-          <h2 className="section-title">Quem já automatizou.</h2>
+          <div className="eyebrow">(F) DEPOIMENTOS</div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:28}}>
+            <h2 className="section-title" style={{marginBottom:0}}>Quem já automatizou.</h2>
+            <button className="btn-outline" onClick={()=>{setFbSent(false);setFbErro('');setFeedbackOpen(true)}}>💬 Deixar meu feedback</button>
+          </div>
           <div className="testi-grid">
-            <div className="t-card">
-              <p>"O painel reduziu 90% do nosso trabalho manual de fechamento. Roda sozinho."</p>
-              <div className="t-head">
-                <div className="t-avatar"><img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60" alt="Marina Costa"/></div>
-                <div><strong>Marina Costa</strong><span>COO · Vetor Log</span></div>
+            {depoimentos.map((d)=>(
+              <div key={d.id} className="t-card">
+                <p>“{d.texto}”</p>
+                <div className="t-head">
+                  <div className="t-avatar">{d.avatar_url ? <img src={d.avatar_url} alt={d.nome}/> : d.nome.charAt(0)}</div>
+                  <div><strong>{d.nome}</strong><span>{d.cargo}</span></div>
+                </div>
               </div>
-            </div>
-            <div className="t-card">
-              <p>"API enxuta e documentada. Integração levou dias, não meses."</p>
-              <div className="t-head">
-                <div className="t-avatar"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60" alt="Diego Ramos"/></div>
-                <div><strong>Diego Ramos</strong><span>Head de Produto · Nuvem</span></div>
-              </div>
-            </div>
-            <div className="t-card">
-              <p>"A landing dobrou nossos leads qualificados na primeira quinzena."</p>
-              <div className="t-head">
-                <div className="t-avatar"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60" alt="Paula Menezes"/></div>
-                <div><strong>Paula Menezes</strong><span>Fundadora · Karta</span></div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -272,12 +332,12 @@ export default function App(){
       {/* FAQ */}
       <section id="faq" className="section" style={{paddingTop:0}}>
         <div className="container">
-          <div className="eyebrow">(F) FAQ</div>
+          <div className="eyebrow">(G) FAQ</div>
           <h2 className="section-title">Perguntas frequentes.</h2>
           <div className="faq">
             {[
               {q:'Quais são os prazos de entrega?', a:'Landing pages: 7–10 dias úteis. APIs e automações: 2–4 semanas dependendo do escopo. Sempre com cronograma e entregas parciais no Notion/GitHub.'},
-              {q:'Quais tecnologias você utiliza?', a:'Python, Node.js, Postgres e APIs REST. Escolho a stack que atende ao seu contexto.'},
+              {q:'Quais tecnologias você utiliza?', a:'PostgreSQL, Python, FastAPI, HTML, CSS, JS e React — com infraestrutura na Vercel. Escolho a combinação certa para cada contexto.'},
               {q:'Tem suporte pós-entrega?', a:'Sim — 15 dias de ajustes inclusos + documentação, Loom de handoff e monitoramento inicial. Suporte contínuo sob contrato mensal se precisar.'},
               {q:'Formas de pagamento?', a:'50% para reservar agenda + 50% na entrega. Pix ou até 12x no cartão (com taxa). Nota fiscal inclusa.'},
             ].map((f,i)=>(
@@ -345,22 +405,21 @@ export default function App(){
               <div className="form-grid two">
                 <div className="field">
                   <label>Tipo de projeto</label>
-                  <select value={form.projeto} onChange={e=>setForm({...form, projeto:e.target.value})}>
+                  <select value={form.projeto} onChange={handleProjetoChange}>
                     <option>Desenvolvimento de APIs</option>
+                    <option>Landing Pages</option>
+                    <option>Web Apps</option>
                     <option>Automações de Processos</option>
-                    <option>Landing Pages & Web Apps</option>
-                    <option>Identidade Visual</option>
-                    <option>Ilustração autoral</option>
                     <option>Outro</option>
                   </select>
                 </div>
                 <div className="field">
                   <label>Orçamento estimado</label>
                   <select value={form.orcamento} onChange={e=>setForm({...form, orcamento:e.target.value})}>
-                    <option>R$ 2k - 5k</option>
-                    <option>R$ 5k - 15k</option>
-                    <option>R$ 15k - 30k</option>
-                    <option>R$ 30k+</option>
+                    <option>R$ 800 - 1k</option>
+                    <option>R$ 2k - 3,5k</option>
+                    <option>R$ 3k - 5k</option>
+                    <option>R$ 3k - 6k</option>
                     <option>Ainda não sei (sob consulta)</option>
                   </select>
                 </div>
@@ -380,6 +439,265 @@ export default function App(){
           </div>
         </div>
       )}
+
+      {/* MODAL CASE COMPLETO */}
+      {caseAberto && <CaseModal projeto={caseAberto} onFechar={()=>setCaseAberto(null)} />}
+
+      {/* MODAL FEEDBACK */}
+      {feedbackOpen && (
+        <div className="modal-overlay" onClick={()=>setFeedbackOpen(false)}>
+          <div className="modal" onClick={e=>e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>💬 Deixe seu feedback</h3>
+              <button onClick={()=>setFeedbackOpen(false)}>✕</button>
+            </div>
+            <p>Conte como foi trabalhar comigo — seu depoimento aparece no site após aprovação.</p>
+
+            {fbSent && <div className="success">✅ Obrigado pelo feedback! Ele será publicado após aprovação. 🙏</div>}
+            {fbErro && <div className="success" style={{background:'rgba(239,68,68,.1)',borderColor:'rgba(239,68,68,.3)',color:'#FCA5A5'}}>{fbErro}</div>}
+
+            {!fbSent && (
+            <form onSubmit={handleFeedback}>
+              <div className="form-grid two">
+                <div className="field">
+                  <label>Seu nome *</label>
+                  <input placeholder="Paulo Henrique" value={fb.nome} onChange={e=>setFb({...fb, nome:e.target.value})} />
+                </div>
+                <div className="field">
+                  <label>Cargo · Empresa</label>
+                  <input placeholder="Micro-Empresário - Jp Croco" value={fb.cargo} onChange={e=>setFb({...fb, cargo:e.target.value})} />
+                </div>
+              </div>
+              <div className="field">
+                <label>Feedback *</label>
+                <textarea placeholder="Como foi o projeto, o que mudou no seu negócio…" value={fb.texto} onChange={e=>setFb({...fb, texto:e.target.value})} />
+              </div>
+              <div className="form-foot">
+                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={fbEnviando}>{fbEnviando ? 'Enviando…' : 'Enviar feedback →'}</button>
+              </div>
+            </form>
+            )}
+            {fbSent && <button className="btn-outline" style={{width:'100%',marginTop:8}} onClick={()=>setFeedbackOpen(false)}>Fechar</button>}
+          </div>
+        </div>
+      )}
     </>
+  )
+}
+
+function SkillBar({ nome, pct, dim }){
+  const ref = useRef(null);
+  const [visivel, setVisivel] = useState(false);
+  const [num, setNum] = useState(0);
+  useEffect(()=>{
+    const el = ref.current;
+    if(!el) return;
+    const obs = new IntersectionObserver(([e])=>{
+      if(e.isIntersecting){ setVisivel(true); obs.disconnect(); }
+    }, {threshold:.4});
+    obs.observe(el);
+    return ()=>obs.disconnect();
+  },[]);
+  useEffect(()=>{
+    if(!visivel) return;
+    let raf;
+    const t0 = performance.now(), dur = 1200;
+    const tick = (t)=>{
+      const p = Math.min(1, (t - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setNum(Math.round(eased * pct));
+      if(p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(raf);
+  },[visivel, pct]);
+  return (
+    <div ref={ref} className="skill" style={dim ? {opacity:.35} : undefined}>
+      <div className="skill-head"><span>{nome}</span><strong>{num}%</strong></div>
+      <div className="skill-track">
+        <div className="skill-fill" style={{width: visivel ? pct + '%' : '0%'}} />
+      </div>
+    </div>
+  );
+}
+
+const NIVEL_CSS = 70;
+
+const SKILLS = [
+  { nome: 'Python', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
+  { nome: 'PostgreSQL', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
+  { nome: 'HTML', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
+  { nome: 'Vercel', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg', invert: true },
+  { nome: 'CSS', pct: '70%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
+  { nome: 'JavaScript', pct: '60%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
+  { nome: 'React', pct: 'em aprendizado', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
+];
+
+function SkillIcon({ nome, src, pct, invert, ativo, onAtivo }){
+  const [falhou, setFalhou] = useState(false);
+  return (
+    <button type="button" className={`sk-tile${ativo ? ' active' : ''}`}
+      onMouseEnter={() => onAtivo(nome)} onMouseLeave={() => onAtivo(null)}
+      onFocus={() => onAtivo(nome)} onBlur={() => onAtivo(null)}
+      onClick={() => onAtivo(ativo ? null : nome)} title={`${nome} — ${pct}`}>
+      {falhou
+        ? <span className="sk-letter">{nome.charAt(0)}</span>
+        : <img src={src} alt={nome} loading="lazy" className={invert ? 'invert' : ''} onError={() => setFalhou(true)} />}
+      <span className="sk-name">{nome}</span>
+      <span className="sk-pct">{pct}</span>
+    </button>
+  );
+}
+
+function Habilidades(){
+  const [teste, setTeste] = useState(NIVEL_CSS);
+  const [ativo, setAtivo] = useState(null);
+  const diff = teste - NIVEL_CSS;
+  const veredito = diff === 0
+    ? '🎯 cravado no meu nível!'
+    : diff > 0 ? `${diff}% acima do meu nível` : `${-diff}% abaixo do meu nível`;
+  const dim = (nome) => ativo && ativo !== nome;
+  return (
+    <div className="skills-grid">
+    <div className="skills-list">
+      <SkillBar nome="Python" pct={100} dim={dim('Python')} />
+      <SkillBar nome="FastAPI" pct={100} dim={dim('FastAPI')} />
+      <SkillBar nome="PostgreSQL" pct={100} dim={dim('PostgreSQL')} />
+      <SkillBar nome="HTML" pct={100} dim={dim('HTML')} />
+      <SkillBar nome="Vercel" pct={100} dim={dim('Vercel')} />
+      <SkillBar nome="CSS" pct={NIVEL_CSS} dim={dim('CSS')} />
+      <div className="css-lab">
+        <label htmlFor="css-teste">🧪 Teste meu CSS — arraste e compare com meus {NIVEL_CSS}%</label>
+        <div className="css-lab-row">
+          <input id="css-teste" type="range" min="0" max="100" value={teste}
+            onChange={(e)=>setTeste(Number(e.target.value))} aria-label="Seu nível de CSS" />
+          <span>{teste}%</span>
+        </div>
+        <div className="css-lab-track">
+          <div className="css-lab-fill" style={{width: teste + '%'}} />
+          <div className="css-lab-marker" style={{left: NIVEL_CSS + '%'}} title={`Meu nível: ${NIVEL_CSS}%`} />
+        </div>
+        <p className="css-lab-veredito">{veredito} <span>(eu: {NIVEL_CSS}%)</span></p>
+      </div>
+      <SkillBar nome="JavaScript" pct={60} dim={dim('JavaScript')} />
+      <div className="skill-learn-row" style={dim('React') ? {opacity:.35} : undefined}>
+        <span>React</span>
+        <strong className="learn-badge"><i/>em aprendizado</strong>
+      </div>
+    </div>
+    <div className="skills-icons">
+      <div className="sk-grid">
+        {SKILLS.map((s) => (
+          <SkillIcon key={s.nome} {...s} ativo={ativo === s.nome} onAtivo={setAtivo} />
+        ))}
+      </div>
+      <p className="sk-hint">Passe o mouse para destacar a barra correspondente</p>
+    </div>
+    </div>
+  );
+}
+
+function CaseModal({ projeto: p, onFechar }){
+  const galeria = [p.capa_url || p.imagem_url, ...(p.imagens || [])].filter(Boolean);
+  const [imgAtiva, setImgAtiva] = useState(0);
+  const [lightbox, setLightbox] = useState(null);
+  const faixaRef = useRef(null);
+  const linguagens = (p.linguagens || '').split(',').map(s=>s.trim()).filter(Boolean);
+  useEffect(()=>{
+    if (lightbox === null) return;
+    const nav = (e)=>{
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight') setLightbox((i)=>(i+1)%galeria.length);
+      if (e.key === 'ArrowLeft') setLightbox((i)=>(i-1+galeria.length)%galeria.length);
+    };
+    window.addEventListener('keydown', nav);
+    return ()=> window.removeEventListener('keydown', nav);
+  },[lightbox, galeria.length]);
+  const total = galeria.length;
+  const anterior = ()=> setImgAtiva(i => (i - 1 + total) % total);
+  const proxima = ()=> setImgAtiva(i => (i + 1) % total);
+  const rolarFaixa = (dir)=> faixaRef.current?.scrollBy({ left: dir * 220, behavior: 'smooth' });
+  useEffect(()=>{
+    faixaRef.current?.querySelector('.active')?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  },[imgAtiva]);
+  return (
+    <div className="modal-overlay" onClick={onFechar}>
+      <div className="modal case-modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-head">
+          <h3>{p.titulo}</h3>
+          <button onClick={onFechar}>✕</button>
+        </div>
+        {linguagens.length > 0 && (
+          <div className="case-chips">{linguagens.map(l=><span key={l}>{l}</span>)}</div>
+        )}
+        {galeria.length > 0 && (
+          <div className="case-galeria">
+            <div className="case-stage">
+              <img src={galeria[Math.min(imgAtiva, galeria.length-1)]} alt={p.titulo}
+                className="case-main zoomable" title="Clique para ampliar"
+                onClick={()=>setLightbox(Math.min(imgAtiva, galeria.length-1))}/>
+              {galeria.length > 1 && (
+                <>
+                  <button type="button" className="stage-seta esquerda" onClick={anterior} aria-label="Imagem anterior">‹</button>
+                  <button type="button" className="stage-seta direita" onClick={proxima} aria-label="Próxima imagem">›</button>
+                  <span className="stage-contador">{Math.min(imgAtiva, galeria.length-1)+1} / {galeria.length}</span>
+                </>
+              )}
+            </div>
+            {galeria.length > 1 && (
+              <div className="case-carrossel">
+                <button type="button" className="carrossel-seta" onClick={()=>rolarFaixa(-1)} aria-label="Rolar miniaturas para a esquerda">‹</button>
+                <div className="case-thumbs" ref={faixaRef}>
+                  {galeria.map((u,i)=>(
+                    <button key={u+i} type="button" className={i===imgAtiva?'active':''} onClick={()=>setImgAtiva(i)}>
+                      <img src={u} alt={`detalhe ${i+1}`} loading="lazy"/>
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="carrossel-seta" onClick={()=>rolarFaixa(1)} aria-label="Rolar miniaturas para a direita">›</button>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="case-bloco">
+          <h4>🧩 Problema</h4><p>{p.problema || '—'}</p>
+        </div>
+        <div className="case-bloco">
+          <h4>✅ Solução</h4><p>{p.solucao || '—'}</p>
+        </div>
+        {!!p.como_foi_feito && (
+          <div className="case-bloco">
+            <h4>🛠️ Como foi feito</h4>
+            {p.como_foi_feito.split('\n').filter(l=>l.trim()).map((l,i)=>(<p key={i}>{l}</p>))}
+          </div>
+        )}
+        {!!p.estrutura_pastas && (
+          <div className="case-bloco">
+            <h4>📁 Estrutura</h4>
+            <pre className="case-tree">{p.estrutura_pastas}</pre>
+          </div>
+        )}
+        <div className="form-foot">
+          {!!p.link_url && <a href={p.link_url} target="_blank" rel="noreferrer" className="btn-primary" style={{flex:1,padding:'12px'}}>🔗 Ver projeto online</a>}
+          <button className="btn-outline" onClick={onFechar}>Fechar</button>
+        </div>
+      </div>
+      {lightbox !== null && (
+        <div className="lightbox" onClick={()=>setLightbox(null)}>
+          <button className="lightbox-fechar" onClick={()=>setLightbox(null)} aria-label="Fechar ampliação">✕</button>
+          {galeria.length > 1 && (
+            <>
+              <button className="lightbox-seta esquerda" aria-label="Imagem anterior"
+                onClick={(e)=>{e.stopPropagation();setLightbox((lightbox-1+galeria.length)%galeria.length)}}>‹</button>
+              <button className="lightbox-seta direita" aria-label="Próxima imagem"
+                onClick={(e)=>{e.stopPropagation();setLightbox((lightbox+1)%galeria.length)}}>›</button>
+            </>
+          )}
+          <img src={galeria[lightbox]} alt={`${p.titulo} — ampliada`}
+            onClick={(e)=>e.stopPropagation()} />
+          <span className="lightbox-contador">{lightbox+1} / {galeria.length}</span>
+        </div>
+      )}
+    </div>
   )
 }

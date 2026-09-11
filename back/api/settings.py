@@ -29,6 +29,12 @@ class Settings(BaseSettings):
     SEED_ADMIN_EMAIL: str = 'mayckonkennedy877@gmail.com'
     SEED_ADMIN_SENHA: str = 'troque-esta-senha'
 
+    UPLOAD_DIR: str = 'uploads'
+    MAX_UPLOAD_MB: int = 5
+
+    # Vercel Blob (produção — disco serverless é efêmero; com token, uploads vão p/ Blob)
+    BLOB_READ_WRITE_TOKEN: str = ''
+
     @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(',') if o.strip()]

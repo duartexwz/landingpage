@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { api, tokens } from './lib/api.js';
+import { BASE, api, tokens } from './lib/api.js';
 import { waCliente } from './lib/config.js';
 import './Admin.css';
 
@@ -22,6 +22,7 @@ export default function Admin() {
   const [itens, setItens] = useState([]);
   const [filtro, setFiltro] = useState({ status: '', busca: '' });
   const [carregando, setCarregando] = useState(false);
+  const [aba, setAba] = useState('orcamentos');
 
   const stats = useMemo(
     () => ({
@@ -140,22 +141,31 @@ export default function Admin() {
         </div>
         <div className="admin-top">
           <div>
-            <h1>Orçamentos<span className="accent">.</span></h1>
-            <p className="mono dim">$ leads --origem=landing</p>
+            <h1>Painel<span className="accent">.</span></h1>
+            <p className="mono dim">$ mayckon.dev --admin</p>
           </div>
           <div className="admin-top-actions">
             <a className="btn-outline" href="/">Ver site</a>
             <button className="btn-outline" onClick={sair}>Sair</button>
           </div>
         </div>
+        <div className="admin-tabs">
+          <button className={aba === 'orcamentos' ? 'active' : ''} onClick={() => setAba('orcamentos')}>💰 Orçamentos <span>{itens.length}</span></button>
+          <button className={aba === 'editar' ? 'active' : ''} onClick={() => setAba('editar')}>✏️ Editar landing</button>
+        </div>
+        {aba === 'orcamentos' && (
         <div className="admin-stats">
           <div className="stat"><strong>{stats.total}</strong><span>total</span></div>
           <div className="stat s-novo"><strong>{stats.novos}</strong><span>novos</span></div>
           <div className="stat s-at"><strong>{stats.atendimento}</strong><span>em atendimento</span></div>
           <div className="stat s-ok"><strong>{stats.convertidos}</strong><span>convertidos</span></div>
         </div>
+        )}
       </header>
 
+      {aba === 'editar'
+        ? <EditarLanding token={sess.access} />
+        : <>
       <div className="admin-filtros">
         <select value={filtro.status} onChange={(e) => setFiltro({ ...filtro, status: e.target.value })}>
           <option value="">Todos os status</option>
@@ -213,6 +223,329 @@ export default function Admin() {
         ))}
         {!carregando && itens.length === 0 && <p className="mono dim">$ nenhum lead encontrado.</p>}
       </div>
+        </>}
+    </div>
+  );
+}
+
+/* ================= EDITAR LANDING ================= */
+
+const PROJ_VAZIO = { titulo: '', problema: '', solucao: '', imagem_url: '', capa_url: '', imagens: [], link_url: '', como_foi_feito: '', estrutura_pastas: '', linguagens: '', ordem: 0, ativo: true };
+const DEP_VAZIO = { texto: '', nome: '', cargo: '', avatar_url: '', ordem: 0, ativo: true };
+
+function FotoUpload({ token, value, onChange, label = 'Foto' }) {
+  const [up, setUp] = useState(false);
+  const [prev, setPrev] = useState('');
+
+  const escolher = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPrev(URL.createObjectURL(file));
+    setUp(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${BASE}/api/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `Erro ${res.status}`);
+      onChange(data.url);
+      setPrev('');
+    } catch (err) {
+      alert(err.message);
+      setPrev('');
+    } finally {
+      setUp(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="foto-upload">
+      <span>{label}</span>
+      {(prev || value) && <img className="edit-preview" src={prev || value} alt="preview" onError={(e) => { e.target.style.display = 'none'; }} />}
+      <label className="btn-outline sm file-btn">
+        {up ? '⏳ Enviando…' : '📤 Escolher imagem'}
+        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={escolher} disabled={up} hidden />
+      </label>
+      {value && !prev && !up && <span className="mono dim up-ok">✓ enviada</span>}
+    </div>
+  );
+}
+
+function GaleriaUpload({ token, value = [], onChange, label = 'Imagens do case' }) {
+  const [up, setUp] = useState(false);
+
+  const escolher = async (e) => {
+    const files = [...(e.target.files || [])];
+    if (!files.length) return;
+    setUp(true);
+    try {
+      const urls = [];
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch(`${BASE}/api/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || `Erro ${res.status}`);
+        urls.push(data.url);
+      }
+      onChange([...(value || []), ...urls]);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUp(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="foto-upload">
+      <span>{label} ({(value || []).length})</span>
+      {(value || []).length > 0 && (
+        <div className="galeria-thumbs">
+          {(value || []).map((u) => (
+            <div key={u} className="galeria-thumb">
+              <img src={u} alt="case" />
+              <button onClick={() => onChange((value || []).filter((x) => x !== u))} title="Remover">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <label className="btn-outline sm file-btn">
+        {up ? '⏳ Enviando…' : '📤 Adicionar imagens'}
+        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple onChange={escolher} disabled={up} hidden />
+      </label>
+    </div>
+  );
+}
+
+function EditarLanding({ token }) {
+  const [bio, setBio] = useState({ titulo: '', texto: '', sub: '' });
+  const [foto, setFoto] = useState('');
+  const [projetos, setProjetos] = useState([]);
+  const [deps, setDeps] = useState([]);
+  const [novoProj, setNovoProj] = useState(PROJ_VAZIO);
+  const [novoDep, setNovoDep] = useState(DEP_VAZIO);
+  const [msg, setMsg] = useState('');
+  const [editProj, setEditProj] = useState({});
+  const [editDep, setEditDep] = useState({});
+  const [excluirProj, setExcluirProj] = useState(null);
+  const [excluindo, setExcluindo] = useState(false);
+
+  const carregarTudo = async () => {
+    try {
+      const site = await api.obterSite();
+      setBio(site.bio || {});
+      setFoto(site.foto_url || '');
+      setProjetos(await api.listarProjetos(token));
+      setDeps(await api.listarDepoimentos(token));
+    } catch (e) {
+      setMsg(e.message);
+    }
+  };
+
+  useEffect(() => { carregarTudo(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!excluirProj) return;
+    document.body.style.overflow = 'hidden';
+    const fechar = (e) => { if (e.key === 'Escape') setExcluirProj(null); };
+    window.addEventListener('keydown', fechar);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', fechar);
+    };
+  }, [excluirProj]);
+
+  const ok = (t) => { setMsg(`✅ ${t}`); setTimeout(() => setMsg(''), 2500); };
+
+  // helpers de edição inline de projeto: ep lê (editado ?? original), sp grava
+  const ep = (p, campo) => editProj[p.id]?.[campo] ?? p[campo] ?? '';
+  const sp = (pid, campo, valor) => setEditProj((prev) => {
+    const base = projetos.find((x) => x.id === pid) || {};
+    return { ...prev, [pid]: { ...base, ...(prev[pid] || {}), [campo]: valor } };
+  });
+  const salvarProj = async (p) => {
+    const m = { ...p, ...(editProj[p.id] || {}) };
+    const upd = await api.atualizarProjeto(token, p.id, {
+      titulo: m.titulo, problema: m.problema, solucao: m.solucao,
+      imagem_url: m.imagem_url || null, capa_url: m.capa_url || null,
+      imagens: m.imagens || [], link_url: m.link_url || null,
+      como_foi_feito: m.como_foi_feito || '', estrutura_pastas: m.estrutura_pastas || '',
+      linguagens: m.linguagens || '', ordem: Number(m.ordem) || 0, ativo: !!m.ativo,
+    });
+    setProjetos((xs) => xs.map((x) => (x.id === p.id ? upd : x)));
+    setEditProj(({ [p.id]: _drop, ...r }) => r);
+    ok('Projeto salvo!');
+  };
+
+  const confirmarExcluirProj = async () => {
+    if (!excluirProj) return;
+    setExcluindo(true);
+    try {
+      await api.excluirProjeto(token, excluirProj.id);
+      setProjetos((xs) => xs.filter((x) => x.id !== excluirProj.id));
+      ok('Projeto removido!');
+      setExcluirProj(null);
+    } catch (e) {
+      setMsg(e.message);
+    } finally {
+      setExcluindo(false);
+    }
+  };
+
+  const salvarSite = async () => {
+    try {
+      await api.salvarSite(token, { bio, foto_url: foto });
+      ok('Landing atualizada!');
+    } catch (e) { setMsg(e.message); }
+  };
+
+  return (
+    <div className="edit-wrap">
+      {msg && <div className="admin-erro" style={{ marginBottom: 12 }}>{msg}</div>}
+
+      <section className="edit-card">
+        <h3>👤 Bio + foto</h3>
+        <label>Título<input value={bio.titulo || ''} onChange={(e) => setBio({ ...bio, titulo: e.target.value })} /></label>
+        <label>Texto<textarea value={bio.texto || ''} onChange={(e) => setBio({ ...bio, texto: e.target.value })} /></label>
+        <label>Subtexto<textarea value={bio.sub || ''} onChange={(e) => setBio({ ...bio, sub: e.target.value })} /></label>
+        <FotoUpload token={token} value={foto} onChange={setFoto} label="Foto de perfil" />
+        <button className="btn-primary" onClick={salvarSite}>Salvar bio + foto</button>
+      </section>
+
+      <section className="edit-card">
+        <h3>🗂️ Projetos ({projetos.length})</h3>
+        {projetos.map((p) => (
+          <div key={p.id} className="edit-item">
+            <input value={ep(p, 'titulo')} onChange={(e) => sp(p.id, 'titulo', e.target.value)} placeholder="Título" />
+            <textarea value={ep(p, 'problema')} onChange={(e) => sp(p.id, 'problema', e.target.value)} placeholder="Problema" />
+            <textarea value={ep(p, 'solucao')} onChange={(e) => sp(p.id, 'solucao', e.target.value)} placeholder="Solução" />
+            <div className="edit-row2">
+              <FotoUpload token={token} label="Capa (landing)" value={ep(p, 'capa_url') || ep(p, 'imagem_url')} onChange={(url) => sp(p.id, 'capa_url', url)} />
+              <GaleriaUpload token={token} value={ep(p, 'imagens') || []} onChange={(arr) => sp(p.id, 'imagens', arr)} />
+            </div>
+            <input value={ep(p, 'link_url')} onChange={(e) => sp(p.id, 'link_url', e.target.value)} placeholder="Link do projeto (https://…)" />
+            <input value={ep(p, 'linguagens')} onChange={(e) => sp(p.id, 'linguagens', e.target.value)} placeholder="Linguagens (ex: Python, FastAPI, React)" />
+            <textarea className="mono-area" value={ep(p, 'como_foi_feito')} onChange={(e) => sp(p.id, 'como_foi_feito', e.target.value)} placeholder="Como foi feito (quase um README…)" />
+            <textarea className="mono-area" value={ep(p, 'estrutura_pastas')} onChange={(e) => sp(p.id, 'estrutura_pastas', e.target.value)} placeholder={'Estrutura de pastas (ex:\napi/\n  routers/\nfront/\n  src/)'} />
+            <div className="edit-row">
+              <input type="number" value={ep(p, 'ordem')} onChange={(e) => sp(p.id, 'ordem', Number(e.target.value))} title="Ordem" />
+              <label className="check"><input type="checkbox" checked={!!(editProj[p.id]?.ativo ?? p.ativo)} onChange={(e) => sp(p.id, 'ativo', e.target.checked)} /> visível</label>
+              <button className="btn-primary sm" onClick={() => salvarProj(p)}>Salvar</button>
+              <button className="danger sm" onClick={() => setExcluirProj(p)}>Remover</button>
+            </div>
+          </div>
+        ))}
+        <div className="edit-item novo">
+          <strong>+ Novo projeto</strong>
+          <input value={novoProj.titulo} onChange={(e) => setNovoProj({ ...novoProj, titulo: e.target.value })} placeholder="Título *" />
+          <textarea value={novoProj.problema} onChange={(e) => setNovoProj({ ...novoProj, problema: e.target.value })} placeholder="Problema" />
+          <textarea value={novoProj.solucao} onChange={(e) => setNovoProj({ ...novoProj, solucao: e.target.value })} placeholder="Solução" />
+          <div className="edit-row2">
+            <FotoUpload token={token} label="Capa (landing)" value={novoProj.capa_url} onChange={(url) => setNovoProj({ ...novoProj, capa_url: url })} />
+            <GaleriaUpload token={token} value={novoProj.imagens} onChange={(arr) => setNovoProj({ ...novoProj, imagens: arr })} />
+          </div>
+          <input value={novoProj.link_url} onChange={(e) => setNovoProj({ ...novoProj, link_url: e.target.value })} placeholder="Link do projeto (https://…)" />
+          <input value={novoProj.linguagens} onChange={(e) => setNovoProj({ ...novoProj, linguagens: e.target.value })} placeholder="Linguagens (ex: Python, FastAPI, React)" />
+          <textarea className="mono-area" value={novoProj.como_foi_feito} onChange={(e) => setNovoProj({ ...novoProj, como_foi_feito: e.target.value })} placeholder="Como foi feito (quase um README…)" />
+          <textarea className="mono-area" value={novoProj.estrutura_pastas} onChange={(e) => setNovoProj({ ...novoProj, estrutura_pastas: e.target.value })} placeholder={'Estrutura de pastas (ex:\napi/\n  routers/\nfront/\n  src/)'} />
+          <button className="btn-primary sm" onClick={async () => {
+            if (!novoProj.titulo) { alert('Título é obrigatório'); return; }
+            const criado = await api.criarProjeto(token, novoProj);
+            setProjetos((xs) => [...xs, criado]);
+            setNovoProj(PROJ_VAZIO);
+            ok('Projeto adicionado!');
+          }}>Adicionar projeto</button>
+        </div>
+      </section>
+
+      <section className="edit-card">
+        <h3>💬 Feedbacks / depoimentos ({deps.length})</h3>
+        {deps.map((d) => (
+          <div key={d.id} className="edit-item">
+            {!d.ativo && (
+              <div className="pendente-row">
+                <span className="badge-status novo">⏳ pendente de aprovação</span>
+                <button className="btn-primary sm" onClick={async () => {
+                  const upd = await api.atualizarDepoimento(token, d.id, { ativo: true });
+                  setDeps((xs) => xs.map((x) => (x.id === d.id ? upd : x)));
+                  ok('Feedback aprovado e publicado!');
+                }}>✓ Aprovar e publicar</button>
+              </div>
+            )}
+            <textarea value={editDep[d.id]?.texto ?? d.texto} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], texto: e.target.value } })} placeholder="Texto do feedback" />
+            <div className="edit-row">
+              <input value={editDep[d.id]?.nome ?? d.nome} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], nome: e.target.value } })} placeholder="Nome" />
+              <input value={editDep[d.id]?.cargo ?? d.cargo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], cargo: e.target.value } })} placeholder="Cargo · Empresa" />
+            </div>
+            <input value={editDep[d.id]?.avatar_url ?? d.avatar_url ?? ''} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], avatar_url: e.target.value } })} placeholder="URL do avatar" />
+            <FotoUpload token={token} label="Avatar (ou cole a URL acima)" value="" onChange={(url) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], avatar_url: url } })} />
+            <div className="edit-row">
+              <input type="number" value={editDep[d.id]?.ordem ?? d.ordem} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ordem: Number(e.target.value) } })} title="Ordem" />
+              <label className="check"><input type="checkbox" checked={editDep[d.id]?.ativo ?? d.ativo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ativo: e.target.checked } })} /> visível</label>
+              <button className="btn-primary sm" onClick={async () => {
+                const patch = editDep[d.id] || {};
+                const upd = await api.atualizarDepoimento(token, d.id, { texto: patch.texto ?? d.texto, nome: patch.nome ?? d.nome, cargo: patch.cargo ?? d.cargo, avatar_url: patch.avatar_url ?? d.avatar_url, ordem: patch.ordem ?? d.ordem, ativo: patch.ativo ?? d.ativo });
+                setDeps((xs) => xs.map((x) => (x.id === d.id ? upd : x)));
+                setEditDep(({ [d.id]: _drop2, ...r }) => r);
+                ok('Feedback salvo!');
+              }}>Salvar</button>
+              <button className="danger sm" onClick={async () => {
+                if (!confirm(`Remover feedback de "${d.nome}"?`)) return;
+                await api.excluirDepoimento(token, d.id);
+                setDeps((xs) => xs.filter((x) => x.id !== d.id));
+              }}>Remover</button>
+            </div>
+          </div>
+        ))}
+        <div className="edit-item novo">
+          <strong>+ Novo feedback</strong>
+          <textarea value={novoDep.texto} onChange={(e) => setNovoDep({ ...novoDep, texto: e.target.value })} placeholder="Texto do feedback *" />
+          <div className="edit-row">
+            <input value={novoDep.nome} onChange={(e) => setNovoDep({ ...novoDep, nome: e.target.value })} placeholder="Nome *" />
+            <input value={novoDep.cargo} onChange={(e) => setNovoDep({ ...novoDep, cargo: e.target.value })} placeholder="Cargo · Empresa" />
+          </div>
+          <input value={novoDep.avatar_url} onChange={(e) => setNovoDep({ ...novoDep, avatar_url: e.target.value })} placeholder="URL do avatar" />
+          <FotoUpload token={token} label="Avatar (ou cole a URL acima)" value="" onChange={(url) => setNovoDep({ ...novoDep, avatar_url: url })} />
+          <button className="btn-primary sm" onClick={async () => {
+            if (!novoDep.texto || !novoDep.nome) { alert('Texto e nome são obrigatórios'); return; }
+            const criado = await api.criarDepoimento(token, novoDep);
+            setDeps((xs) => [...xs, criado]);
+            setNovoDep(DEP_VAZIO);
+            ok('Feedback adicionado!');
+          }}>Adicionar feedback</button>
+        </div>
+      </section>
+
+      {excluirProj && (
+        <div className="confirm-overlay" onClick={() => !excluindo && setExcluirProj(null)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-icon">🗑️</div>
+            <h3>Excluir projeto?</h3>
+            <p>
+              <strong>“{excluirProj.titulo}”</strong> será removido da landing
+              permanentemente. Essa ação não pode ser desfeita.
+            </p>
+            <div className="confirm-actions">
+              <button className="btn-outline sm" onClick={() => setExcluirProj(null)} disabled={excluindo}>
+                Cancelar
+              </button>
+              <button className="btn-danger sm" onClick={confirmarExcluirProj} disabled={excluindo}>
+                {excluindo ? 'Excluindo…' : 'Sim, excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

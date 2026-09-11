@@ -24,7 +24,7 @@ def test_orcamento_form_valido():
         mensagem='Automatizar o financeiro, 200 notas/mês, prazo 30 dias',
     )
     assert o.tipo_projeto == 'Desenvolvimento de APIs'
-    assert o.orcamento_estimado == 'R$ 5k - 15k'
+    assert o.orcamento_estimado == 'Ainda não sei (sob consulta)'
 
 
 def test_orcamento_mensagem_curta_rejeitada():
@@ -66,6 +66,11 @@ def test_openapi_tem_rotas_core():
         '/refresh',
         '/logout',
         '/admins/seed',
+        '/conteudo',
+        '/conteudo/site',
+        '/conteudo/projetos',
+        '/conteudo/depoimentos',
+        '/upload',
         '/health',
     ):
         assert esperada in spec, f'falta {esperada}'
@@ -74,7 +79,6 @@ def test_openapi_tem_rotas_core():
         '/pedidos',
         '/pagamento/webhook',
         '/frete/cotar',
-        '/upload',
         '/push/subscribe',
         '/cliente',
         '/usuarios',

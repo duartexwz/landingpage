@@ -7,8 +7,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-from api.routers import admins, login, orcamentos
+from api.routers import admins, conteudo, login, orcamentos, upload
+from api.services.upload_services import pasta_upload_publica
 from api.settings import get_settings
 
 
@@ -51,8 +53,22 @@ def create_app() -> FastAPI:
     def root():
         return {'nome': s.APP_NAME, 'docs': '/docs', 'health': '/health'}
 
-    for r in (login.router, admins.router, orcamentos.router):
+    for r in (
+        login.router,
+        admins.router,
+        orcamentos.router,
+        conteudo.router,
+        upload.router,
+    ):
         app.include_router(r)
+
+    # Disco local (docker/dev). Na Vercel o FS é efêmero — uploads vão p/ Blob.
+    try:
+        app.mount(
+            '/uploads', StaticFiles(directory=pasta_upload_publica()), name='uploads'
+        )
+    except RuntimeError:
+        pass
 
     return app
 

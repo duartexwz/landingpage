@@ -2,6 +2,7 @@
 // Em dev (vite) o proxy redireciona /api -> http://localhost:8000.
 // Em produção (Vercel/Nginx) /api é reescrito para o backend.
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+export { BASE };
 
 async function req(path, { method = 'GET', body, token } = {}) {
   const res = await fetch(`${BASE}${path}`, {
@@ -28,14 +29,37 @@ export const api = {
   atualizarOrcamento: (token, id, patch) =>
     req(`/api/orcamentos/${id}`, { method: 'PATCH', body: patch, token }),
   excluirOrcamento: (token, id) =>
-    fetch(`${BASE}/api/orcamentos/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((r) => {
-      if (!r.ok && r.status !== 204) throw new Error(`Erro ${r.status}`);
-      return true;
-    }),
+    del(`/api/orcamentos/${id}`, token),
+
+  // ---- conteúdo editável da landing ----
+  obterSite: () => req('/api/conteudo'),
+  enviarDepoimento: (payload) =>
+    req('/api/conteudo/depoimentos/enviar', { method: 'POST', body: payload }),
+  salvarSite: (token, payload) =>
+    req('/api/conteudo/site', { method: 'PUT', body: payload, token }),
+  listarProjetos: (token) => req('/api/conteudo/projetos', { token }),
+  criarProjeto: (token, payload) =>
+    req('/api/conteudo/projetos', { method: 'POST', body: payload, token }),
+  atualizarProjeto: (token, id, patch) =>
+    req(`/api/conteudo/projetos/${id}`, { method: 'PATCH', body: patch, token }),
+  excluirProjeto: (token, id) => del(`/api/conteudo/projetos/${id}`, token),
+  listarDepoimentos: (token) => req('/api/conteudo/depoimentos', { token }),
+  criarDepoimento: (token, payload) =>
+    req('/api/conteudo/depoimentos', { method: 'POST', body: payload, token }),
+  atualizarDepoimento: (token, id, patch) =>
+    req(`/api/conteudo/depoimentos/${id}`, { method: 'PATCH', body: patch, token }),
+  excluirDepoimento: (token, id) => del(`/api/conteudo/depoimentos/${id}`, token),
 };
+
+function del(path, token) {
+  return fetch(`${BASE}${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((r) => {
+    if (!r.ok && r.status !== 204) throw new Error(`Erro ${r.status}`);
+    return true;
+  });
+}
 
 export const tokens = {
   get: () => ({

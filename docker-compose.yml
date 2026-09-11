@@ -23,6 +23,7 @@ services:
     ports: ['8000:8000']
     depends_on: [db]
     restart: unless-stopped
+    volumes: [uploads:/code/uploads]
 
   front:
     build:
@@ -35,3 +36,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

@@ -1,8 +1,8 @@
 # Documentação do projeto — landing mayckon.dev + API + Postgres
 
-Escopo final: **formulário de orçamento + painel admin** (e-commerce removido).
+Escopo final: **formulário de orçamento + painel admin (leads + editar landing)**.
 
-## 1. Banco (`back/schema.sql`) — 4 tabelas
+## 1. Banco (`back/schema.sql`) — 7 tabelas
 
 | Tabela | Papel | Colunas-chave / relacionamentos |
 |---|---|---|
@@ -10,6 +10,9 @@ Escopo final: **formulário de orçamento + painel admin** (e-commerce removido)
 | `orcamentos` | **leads do formulário** (nome, e-mail, telefone/whatsapp, tipo_projeto, orcamento_estimado, mensagem) | `status` (novo→em_atendimento→convertido→arquivado), `origem`, `lido`, `consent_lgpd`, `ip`, `user_agent` |
 | `consentimentos` | trilha LGPD | `email → finalidade, aceito, ip` |
 | `refresh_tokens` | refresh JWT 7 dias | `admin_id → admins.id (CASCADE)`, `jti UNIQUE`, `revogado` |
+| `site_config` | bio + foto (`chave → valor JSONB`) | `bio{titulo,texto,sub}`, `foto_url` (seeds inclusos) |
+| `projetos` | portfólio + case completo | `titulo, problema, solucao, capa_url (card), imagens[] (galeria), link_url, como_foi_feito, estrutura_pastas, linguagens, ordem, ativo` (3 seeds) |
+| `depoimentos` | feedbacks editáveis | `texto, nome, cargo, avatar_url, ordem, ativo` (3 seeds) |
 
 `migrations/002_cleanup_ecommerce.sql` removeu as tabelas do modelo antigo.
 `migrate.py` aplica schema/migrations com 1 conexão curta SSL (expande `\i`).
@@ -29,17 +32,28 @@ pydantic-settings (lê `/.env` da raiz), PyJWT, pwdlib+Argon2, email-validator.
 - `services/` — regra de negócio (`OrcamentosServices`, `AuthServices`).
 - `repositories/` — SQL (`QueryRepository` base com `table_name/campos/mapa_filtros/existe`, mais `OrcamentosRepository` e `AdminsRepository`).
 
-**Rotas (8 paths):** `POST /login|/refresh|/logout`, `GET /me`, `POST /admins/seed`,
+**Rotas (17 paths):** `POST /login|/refresh|/logout`, `GET /me`, `POST /admins/seed`,
 `POST /orcamentos` (público, 409 anti-duplicado 24h, 422 validação), `GET /orcamentos?status&busca`,
-`GET/PATCH/DELETE /orcamentos/{id}` (admin, 401 sem Bearer).
+`GET/PATCH/DELETE /orcamentos/{id}` (admin, 401 sem Bearer),
+`GET /conteudo` (público — bio, foto, projetos e depoimentos ativos),
+`PUT /conteudo/site` + CRUD `/conteudo/projetos` + CRUD `/conteudo/depoimentos` (admin),
+`POST /conteudo/depoimentos/enviar` (público — feedback entra pendente `ativo=false`,
+só aparece no site após Aprovar no painel),
+`POST /upload` (admin, só imagens png/jpg/webp/gif até 5MB, validação por assinatura,
+servidas em `/uploads/*` via volume `uploads:` — sem URL manual, o painel envia o arquivo).
 
-## 3. Front / deploy (inalterado)
+## 3. Front / painel
 
-`src/lib/api.js` → `/api/orcamentos`; `App.jsx` POST real; `/admin` → `Admin.jsx`
-(login + refresh automático + filtros + PATCH + DELETE). Vite proxy `/api→:8000`;
-`nginx.conf` (`/api/→backend:8000`, fallback SPA); portas dev `5173/8000`,
-compose `front :80 → backend :8000 → db :5434`;
-`vercel.json` com rewrites. `.env` real na **raiz** (gitignorado via `/.gitignore`).
+`src/lib/api.js` → `/api/*`; `App.jsx` POST do form + carrega `/api/conteudo`
+(portfólio, bio, foto e depoimentos dinâmicos, com fallback embutido se a API cair).
+`/admin` → `Admin.jsx` com abas: **💰 Orçamentos** (lista, filtros, WhatsApp do cliente,
+PATCH, DELETE) e **✏️ Editar landing** (bio, foto com upload, projetos com capa + galeria
+múltipla + como-foi-feito + estrutura + linguagens + link, feedbacks). A landing abre o
+**case completo** em modal (galeria, chips de linguagens, README, estrutura, link).
+FAQ atualizado: PostgreSQL, Python, FastAPI, HTML, CSS, JS, React — infra Vercel.
+Vite proxy `/api→:8000`; `nginx.conf` (`/api/` e `/uploads/` → backend, fallback SPA);
+compose `front :80 → backend :8000 → db :5434`; `vercel.json` com rewrites;
+`.env` real na **raiz** (gitignorado via `/.gitignore`).
 
 ## 4. Erros corrigidos nesta revisão
 
