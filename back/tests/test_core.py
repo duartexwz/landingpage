@@ -75,6 +75,24 @@ def test_r2_url_publica_e_flag():
     )
 
 
+def test_upload_sem_disco_retorna_500_claro():
+    import asyncio
+    from io import BytesIO
+
+    from fastapi import HTTPException, UploadFile
+
+    from api.services.upload_services import UploadServices
+
+    svc = UploadServices(upload_dir='/proc/caminho-inexistente-xyz')
+    up = UploadFile(filename='t.png', file=BytesIO(b'\x89PNG' + b'\x00' * 100))
+    try:
+        asyncio.run(svc.salvar(None, up))
+        raise AssertionError('deveria falhar sem disco gravável')
+    except HTTPException as e:
+        assert e.status_code == 500
+        assert 'R2' in e.detail
+
+
 def test_openapi_tem_rotas_core():
     c = TestClient(app)
     spec = c.get('/openapi.json').json()['paths']

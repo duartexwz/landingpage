@@ -92,7 +92,14 @@ class UploadServices:
         elif self.blob_token:
             url = await self._enviar_blob(nome, data, EXTENSOES[ext])
         else:
-            (_pasta_upload(self.upload_dir) / nome).write_bytes(data)
+            try:
+                (_pasta_upload(self.upload_dir) / nome).write_bytes(data)
+            except OSError:
+                raise HTTPException(
+                    detail='Upload indisponível: configure o R2 '
+                    '(R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_PUBLIC_URL)',
+                    status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                )
             url = f'/uploads/{nome}'
         return {
             'url': url,
