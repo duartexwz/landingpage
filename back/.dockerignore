@@ -1,0 +1,13 @@
+# Build enxuto: nada de caches, venv, segredos ou dados locais
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.env
+uploads/
+.git/
+.vscode/

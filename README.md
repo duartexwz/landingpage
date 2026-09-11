@@ -83,6 +83,9 @@ Na Vercel, cadastre as mesmas chaves em Project Settings → Environment Variabl
 | `CORS_ORIGINS` | Origens liberadas (em prod, incluir o domínio da Vercel) |
 | `SEED_ADMIN_NOME` / `SEED_ADMIN_EMAIL` / `SEED_ADMIN_SENHA` | Admin criado via `POST /admins/seed` |
 | `BLOB_READ_WRITE_TOKEN` | Token do Vercel Blob — sem ele, uploads somem a cada deploy em produção |
+| `R2_ACCOUNT_ID` / `R2_BUCKET` | Conta e bucket do Cloudflare R2 (`landingpage`) |
+| `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Token R2 (Object Read & Write) — sem eles o upload cai p/ disco local |
+| `R2_PUBLIC_URL` | Domínio público do bucket (Custom Domain ou r2.dev) — base das URLs salvas |
 | `VITE_API_URL` (front) | Vazio = mesma origem (`/api`). Só definir se a API estiver noutra URL |
 
 ## Banco e migrations
@@ -125,6 +128,15 @@ confirmação estilizada (sem `confirm()` nativo).
 | POST | `/conteudo/depoimentos/enviar` | público (entra pendente p/ aprovação) |
 | POST | `/upload` | admin (imagens até 5MB, validação por assinatura) |
 
+## Uploads (Cloudflare R2)
+
+`POST /upload` envia para o R2 (prefixo `landing/`) quando as chaves estão
+configuradas; sem elas, cai para Vercel Blob e depois disco local.
+
+1. Cloudflare → R2 → **Manage R2 API Tokens** → Create (permissão **Object Read & Write**, bucket `landingpage`).
+2. Ative o acesso público do bucket: **Custom Domain** (recomendado) ou **Public r2.dev**.
+3. Preencha `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_PUBLIC_URL` no `.env` e nas env vars da Vercel.
+
 ## Deploy em produção (Vercel + Neon)
 
 1. Crie o banco no Neon e aplique schema + migrations (seção acima).
@@ -144,5 +156,6 @@ confirmação estilizada (sem `confirm()` nativo).
 | Foto de perfil quebrada | Defina a foto pelo painel (o fallback agora vai embutido no build) |
 | 401 no painel | Token expirado — o front tenta refresh; se persistir, faça login de novo |
 | Erro de CHECK no banco antigo | Rode `migrate.py --migrations` (006 alinha tipos e faixas) |
+| Página dá 404 na Vercel sem logs | O request nem chegou ao deploy: confira Root Directory (`./`), Framework Preset (`Other`) e Production Branch (`master`) nas Settings; redeploy limpo se o deploy for anterior aos rewrites |
 
 © 2026 mayckon.dev — Todos os direitos reservados.

@@ -1,0 +1,7 @@
+# Não mandar 86M de node_modules nem build antigo p/ o daemon
+node_modules/
+dist/
+.env
+.git/
+.vscode/
+*.log

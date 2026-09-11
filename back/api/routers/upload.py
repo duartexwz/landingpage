@@ -29,5 +29,10 @@ async def enviar_imagem(
         upload_dir=s.UPLOAD_DIR,
         max_mb=s.MAX_UPLOAD_MB,
         blob_token=s.BLOB_READ_WRITE_TOKEN,
+        r2_account_id=s.R2_ACCOUNT_ID,
+        r2_access_key_id=s.R2_ACCESS_KEY_ID,
+        r2_secret_access_key=s.R2_SECRET_ACCESS_KEY,
+        r2_bucket=s.R2_BUCKET,
+        r2_public_url=s.R2_PUBLIC_URL,
     )
     return await svc.salvar(db, file)

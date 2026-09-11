@@ -35,6 +35,19 @@ class Settings(BaseSettings):
     # Vercel Blob (produção — disco serverless é efêmero; com token, uploads vão p/ Blob)
     BLOB_READ_WRITE_TOKEN: str = ''
 
+    # Cloudflare R2 (S3-compatível — destino principal dos uploads em produção)
+    R2_ACCOUNT_ID: str = ''
+    R2_ACCESS_KEY_ID: str = ''
+    R2_SECRET_ACCESS_KEY: str = ''
+    R2_BUCKET: str = 'landingpage'
+    R2_PUBLIC_URL: str = ''
+
+    @property
+    def r2_configurado(self) -> bool:
+        return bool(
+            self.R2_ACCOUNT_ID and self.R2_ACCESS_KEY_ID and self.R2_SECRET_ACCESS_KEY
+        )
+
     @property
     def cors_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(',') if o.strip()]

@@ -56,6 +56,25 @@ def test_services_instanciam_repositories():
     assert svc.orcamentos_repository.table_name == 'orcamentos'
 
 
+def test_r2_url_publica_e_flag():
+    from api.services.upload_services import UploadServices
+
+    sem_r2 = UploadServices()
+    assert sem_r2.r2_configurado is False
+    com_r2 = UploadServices(
+        r2_account_id='abc123',
+        r2_access_key_id='key',
+        r2_secret_access_key='secret',
+        r2_bucket='landingpage',
+        r2_public_url='https://img.exemplo.com/',
+    )
+    assert com_r2.r2_configurado is True
+    assert (
+        com_r2.url_publica_r2('landing/foto.png')
+        == 'https://img.exemplo.com/landing/foto.png'
+    )
+
+
 def test_openapi_tem_rotas_core():
     c = TestClient(app)
     spec = c.get('/openapi.json').json()['paths']
