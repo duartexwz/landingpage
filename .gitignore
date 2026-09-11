@@ -1,5 +1,35 @@
-# Segredos locais — nunca commitar
+# ============================================================
+# Global — segredos, artifacts e pastas locais (nunca commitar)
+# ============================================================
+
+# --- segredos ---
 .env
-back/.env
-front/.env
-*.env
+
+# --- python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+venv/
+
+# --- node ---
+node_modules/
+dist/
+dist-ssr/
+
+# --- uploads locais (dados de runtime, recriados via volume) ---
+back/uploads/*
+
+# --- editores e SO ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- logs ---
+*.log
+npm-debug.log*
