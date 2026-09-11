@@ -1,0 +1,37 @@
+# Landing page completa: banco + API + front.
+#   docker compose up --build -d   # sobe as 3 imagens juntas
+#   docker compose logs -f backend # logs só da API
+#   docker compose logs -f front   # logs só do front
+#   docker compose logs -f db      # logs só do banco
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: landingpage-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: landingpage
+    ports: ['5434:5432']
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  backend:
+    build: ./back
+    container_name: landingpage-backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/landingpage?sslmode=disable
+    ports: ['8000:8000']
+    depends_on: [db]
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ./front
+      args:
+        VITE_API_URL: ''
+    container_name: landingpage-front
+    ports: ['80:80']
+    depends_on: [backend]
+
+volumes:
+  pgdata:

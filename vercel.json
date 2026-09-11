@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    { "src": "front/package.json", "use": "@vercel/static-build", "config": { "distDir": "dist" } },
+    { "src": "back/api/app.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "back/api/app.py" },
+    { "src": "/admin", "dest": "/index.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
