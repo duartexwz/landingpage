@@ -85,13 +85,6 @@ CREATE TRIGGER trg_orc BEFORE UPDATE ON orcamentos FOR EACH ROW EXECUTE FUNCTION
 ALTER TABLE orcamentos ADD COLUMN IF NOT EXISTS telefone TEXT
   CHECK (char_length(telefone) <= 20);
 
--- Evolução: detalhes do case do projeto (bancos criados antes destas colunas)
-ALTER TABLE projetos ADD COLUMN IF NOT EXISTS capa_url TEXT;
-ALTER TABLE projetos ADD COLUMN IF NOT EXISTS imagens JSONB NOT NULL DEFAULT '[]';
-ALTER TABLE projetos ADD COLUMN IF NOT EXISTS como_foi_feito TEXT NOT NULL DEFAULT '';
-ALTER TABLE projetos ADD COLUMN IF NOT EXISTS estrutura_pastas TEXT NOT NULL DEFAULT '';
-ALTER TABLE projetos ADD COLUMN IF NOT EXISTS linguagens TEXT NOT NULL DEFAULT '';
-
 -- ---------- 5. CONTEÚDO EDITÁVEL DA LANDING ----------
 CREATE TABLE IF NOT EXISTS site_config (
   chave TEXT PRIMARY KEY,
@@ -105,7 +98,12 @@ CREATE TABLE IF NOT EXISTS projetos (
   problema TEXT NOT NULL DEFAULT '',
   solucao TEXT NOT NULL DEFAULT '',
   imagem_url TEXT,
+  capa_url TEXT,
+  imagens JSONB NOT NULL DEFAULT '[]',
   link_url TEXT,
+  como_foi_feito TEXT NOT NULL DEFAULT '',
+  estrutura_pastas TEXT NOT NULL DEFAULT '',
+  linguagens TEXT NOT NULL DEFAULT '',
   ordem INTEGER NOT NULL DEFAULT 0,
   ativo BOOLEAN NOT NULL DEFAULT TRUE,
   criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
