@@ -17,6 +17,10 @@ EXTENSOES = {
     '.gif': 'image/gif',
 }
 
+# Client boto3 reaproveitado entre uploads (criar um por request custa
+# centenas de ms; o client é thread-safe e mantém keep-alive).
+_CLIENTES_R2: dict = {}
+
 
 def _pasta_upload(base: str) -> Path:
     pasta = Path(base)
@@ -113,28 +117,44 @@ class UploadServices:
 
         await run_in_threadpool(self._put_r2, chave, data, content_type)
 
-    def _put_r2(self, chave: str, data: bytes, content_type: str) -> None:
+    def _cliente_r2(self):
         try:
             import boto3
+            from botocore.config import Config
         except ImportError:
             raise HTTPException(
                 detail='boto3 não instalado',
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
-        s3 = boto3.client(
-            's3',
-            endpoint_url=f'https://{self.r2_account_id}.r2.cloudflarestorage.com',
-            aws_access_key_id=self.r2_access_key_id,
-            aws_secret_access_key=self.r2_secret_access_key,
-            region_name='auto',
-        )
+        chave = (self.r2_account_id, self.r2_access_key_id)
+        cli = _CLIENTES_R2.get(chave)
+        if cli is None:
+            cli = boto3.client(
+                's3',
+                endpoint_url=f'https://{self.r2_account_id}.r2.cloudflarestorage.com',
+                aws_access_key_id=self.r2_access_key_id,
+                aws_secret_access_key=self.r2_secret_access_key,
+                region_name='auto',
+                config=Config(
+                    connect_timeout=5,
+                    read_timeout=25,
+                    retries={'max_attempts': 2},
+                    tcp_keepalive=True,
+                ),
+            )
+            _CLIENTES_R2[chave] = cli
+        return cli
+
+    def _put_r2(self, chave: str, data: bytes, content_type: str) -> None:
         try:
-            s3.put_object(
+            self._cliente_r2().put_object(
                 Bucket=self.r2_bucket,
                 Key=chave,
                 Body=data,
                 ContentType=content_type,
             )
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(
                 detail=f'Falha no upload (R2): {type(e).__name__}',
