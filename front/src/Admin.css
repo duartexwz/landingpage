@@ -174,6 +174,7 @@
 .btn-outline.sm:disabled{opacity:.6;cursor:wait}
 /* salvar em 2º plano: sem alteração, fica apagado */
 .btn-primary.sm:disabled{opacity:.35;box-shadow:none;cursor:not-allowed;transform:none}
+.btn-primary:disabled{opacity:.35;box-shadow:none;cursor:not-allowed}
 /* modal de sucesso (variante verde da confirm-modal) */
 .confirm-modal.success{border-color:rgba(34,197,94,.45);box-shadow:0 24px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(34,197,94,.08)}
 .confirm-icon.ok{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);color:#4ADE80;font-weight:800}

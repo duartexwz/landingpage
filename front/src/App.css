@@ -33,6 +33,7 @@
   box-shadow:0 4px 20px rgba(155,107,255,.35);
 }
 .btn-primary:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 8px 28px rgba(155,107,255,.45)}
+.btn-primary:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;transform:none}
 .btn-outline{
   display:inline-flex;align-items:center;justify-content:center;
   padding:11px 20px;border-radius:10px;

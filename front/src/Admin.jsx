@@ -330,6 +330,8 @@ function GaleriaUpload({ token, value = [], onChange, label = 'Imagens do case' 
 function EditarLanding({ token }) {
   const [bio, setBio] = useState({ titulo: '', texto: '', sub: '' });
   const [foto, setFoto] = useState('');
+  const [bioIni, setBioIni] = useState({ titulo: '', texto: '', sub: '' });
+  const [fotoIni, setFotoIni] = useState('');
   const [projetos, setProjetos] = useState([]);
   const [deps, setDeps] = useState([]);
   const [novoProj, setNovoProj] = useState(PROJ_VAZIO);
@@ -347,6 +349,8 @@ function EditarLanding({ token }) {
       const site = await api.obterSite();
       setBio(site.bio || {});
       setFoto(site.foto_url || '');
+      setBioIni(site.bio || {});
+      setFotoIni(site.foto_url || '');
       setProjetos(await api.listarProjetos(token));
       setDeps(await api.listarDepoimentos(token));
     } catch (e) {
@@ -411,9 +415,20 @@ function EditarLanding({ token }) {
   const salvarSite = async () => {
     try {
       await api.salvarSite(token, { bio, foto_url: foto });
+      setBioIni({ ...bio });
+      setFotoIni(foto);
       ok('Landing atualizada!');
     } catch (e) { setMsg(e.message); }
   };
+
+  // Bio + foto: salvar só habilita após alguma alteração
+  const bioSujo = (bio.titulo || '') !== (bioIni.titulo || '')
+    || (bio.texto || '') !== (bioIni.texto || '')
+    || (bio.sub || '') !== (bioIni.sub || '')
+    || (foto || '') !== (fotoIni || '');
+
+  // Feedback novo: sujo se texto ou nome preenchidos
+  const novoDepSujo = (novoDep.texto || '').trim() || (novoDep.nome || '').trim();
 
   // Salvar de um projeto existente só habilita após alguma alteração
   const projSujo = (p) => !!editProj[p.id];
@@ -450,7 +465,7 @@ function EditarLanding({ token }) {
         <label>Texto<textarea value={bio.texto || ''} onChange={(e) => setBio({ ...bio, texto: e.target.value })} /></label>
         <label>Subtexto<textarea value={bio.sub || ''} onChange={(e) => setBio({ ...bio, sub: e.target.value })} /></label>
         <FotoUpload token={token} value={foto} onChange={setFoto} label="Foto de perfil" />
-        <button className="btn-primary" onClick={salvarSite}>Salvar bio + foto</button>
+        <button className="btn-primary" onClick={salvarSite} disabled={!bioSujo}>Salvar bio + foto</button>
       </section>
 
       <section className="edit-card">
@@ -517,7 +532,7 @@ function EditarLanding({ token }) {
             <div className="edit-row">
               <input type="number" value={editDep[d.id]?.ordem ?? d.ordem} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ordem: Number(e.target.value) } })} title="Ordem" />
               <label className="check"><input type="checkbox" checked={editDep[d.id]?.ativo ?? d.ativo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ativo: e.target.checked } })} /> visível</label>
-              <button className="btn-primary sm" onClick={async () => {
+              <button className="btn-primary sm" disabled={!editDep[d.id]} onClick={async () => {
                 const patch = editDep[d.id] || {};
                 const upd = await api.atualizarDepoimento(token, d.id, { texto: patch.texto ?? d.texto, nome: patch.nome ?? d.nome, cargo: patch.cargo ?? d.cargo, avatar_url: patch.avatar_url ?? d.avatar_url, ordem: patch.ordem ?? d.ordem, ativo: patch.ativo ?? d.ativo });
                 setDeps((xs) => xs.map((x) => (x.id === d.id ? upd : x)));
@@ -539,7 +554,7 @@ function EditarLanding({ token }) {
             <input value={novoDep.nome} onChange={(e) => setNovoDep({ ...novoDep, nome: e.target.value })} placeholder="Nome *" />
             <input value={novoDep.cargo} onChange={(e) => setNovoDep({ ...novoDep, cargo: e.target.value })} placeholder="Cargo · Empresa" />
           </div>
-          <button className="btn-primary sm" onClick={async () => {
+          <button className="btn-primary sm" disabled={!novoDepSujo} onClick={async () => {
             if (!novoDep.texto || !novoDep.nome) { alert('Texto e nome são obrigatórios'); return; }
             const criado = await api.criarDepoimento(token, novoDep);
             setDeps((xs) => [...xs, criado]);

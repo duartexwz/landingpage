@@ -93,6 +93,10 @@ export default function App(){
     setForm({...form, projeto, orcamento: ORCAMENTO_POR_PROJETO[projeto] || form.orcamento})
   }
 
+  // Enviar só habilita com os obrigatórios preenchidos
+  const formValido = form.nome.trim() && form.email.trim() && form.mensagem.trim();
+  const fbValido = fb.nome.trim() && fb.texto.trim();
+
   const handleSubmit = async (e)=>{
     e.preventDefault()
     if(!form.nome || !form.email || !form.mensagem){ setErro('Preencha nome, e-mail e mensagem'); return }
@@ -431,7 +435,7 @@ export default function App(){
               </div>
 
               <div className="form-foot">
-                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={enviando}>{enviando ? 'Enviando…' : 'Enviar mensagem →'}</button>
+                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={!formValido || enviando} title={!formValido ? 'Preencha nome, e-mail e mensagem' : undefined}>{enviando ? 'Enviando…' : 'Enviar mensagem →'}</button>
                 <a href={waLink('Olá Mayckon, quero um orçamento!')} target="_blank" rel="noreferrer" className="wa-btn">💬 WhatsApp direto</a>
               </div>
               <div style={{fontSize:11,color:'#6B6B8A',marginTop:10,textAlign:'center'}}>Ao enviar você concorda em receber resposta por e-mail/WhatsApp.</div>
@@ -473,7 +477,7 @@ export default function App(){
                 <textarea placeholder="Como foi o projeto, o que mudou no seu negócio…" value={fb.texto} onChange={e=>setFb({...fb, texto:e.target.value})} />
               </div>
               <div className="form-foot">
-                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={fbEnviando}>{fbEnviando ? 'Enviando…' : 'Enviar feedback →'}</button>
+                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={!fbValido || fbEnviando} title={!fbValido ? 'Preencha nome e feedback' : undefined}>{fbEnviando ? 'Enviando…' : 'Enviar feedback →'}</button>
               </div>
             </form>
             )}
