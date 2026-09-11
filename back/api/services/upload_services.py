@@ -22,7 +22,10 @@ def _pasta_upload(base: str) -> Path:
     pasta = Path(base)
     if not pasta.is_absolute():
         pasta = Path(__file__).resolve().parent.parent.parent / base
-    pasta.mkdir(parents=True, exist_ok=True)
+    try:
+        pasta.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass  # ex.: filesystem somente-leitura na Vercel — uploads vão p/ R2/Blob
     return pasta
 
 

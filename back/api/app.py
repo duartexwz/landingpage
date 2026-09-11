@@ -62,12 +62,14 @@ def create_app() -> FastAPI:
     ):
         app.include_router(r)
 
-    # Disco local (docker/dev). Na Vercel o FS é efêmero — uploads vão p/ Blob.
+    # Disco local (docker/dev). Na Vercel o FS é somente-leitura e efêmero:
+    # sem a pasta, o StaticFiles levanta RuntimeError e o mount é pulado
+    # (uploads vão p/ R2/Blob em produção).
     try:
         app.mount(
             '/uploads', StaticFiles(directory=pasta_upload_publica()), name='uploads'
         )
-    except RuntimeError:
+    except (RuntimeError, OSError):
         pass
 
     return app
