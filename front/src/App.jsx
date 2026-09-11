@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { api } from './lib/api.js'
+import { waLink } from './lib/config.js'
 import './App.css'
 
 export default function App(){
@@ -6,8 +8,10 @@ export default function App(){
   const [mobileOpen, setMobileOpen] = useState(false)
   const [faqOpen, setFaqOpen] = useState(1) // second item open as in prototype
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({nome:'', email:'', projeto:'Desenvolvimento de APIs', orcamento:'R$ 5k - 15k', mensagem:''})
+  const [form, setForm] = useState({nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento:'R$ 5k - 15k', mensagem:''})
   const [sent, setSent] = useState(false)
+  const [erro, setErro] = useState('')
+  const [enviando, setEnviando] = useState(false)
 
   useEffect(()=>{
     const onScroll = ()=> setScrolled(window.scrollY>10)
@@ -19,11 +23,24 @@ export default function App(){
     document.body.style.overflow = modalOpen ? 'hidden' : ''
   },[modalOpen])
 
-  const handleSubmit = (e)=>{
+  const handleSubmit = async (e)=>{
     e.preventDefault()
-    if(!form.nome || !form.email || !form.mensagem){ alert('Preencha nome, e-mail e mensagem'); return }
-    setSent(true)
-    setTimeout(()=>{ setSent(false); setModalOpen(false) }, 2500)
+    if(!form.nome || !form.email || !form.mensagem){ setErro('Preencha nome, e-mail e mensagem'); return }
+    setErro(''); setEnviando(true)
+    try {
+      await api.enviarOrcamento({
+        nome: form.nome, email: form.email,
+        telefone: form.telefone.trim() || undefined,
+        tipo_projeto: form.projeto,
+        orcamento_estimado: form.orcamento, mensagem: form.mensagem, consent_lgpd: true,
+      })
+      setSent(true)
+      setTimeout(()=>{ setSent(false); setModalOpen(false); setForm({nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento:'R$ 5k - 15k', mensagem:''}) }, 2500)
+    } catch(err) {
+      setErro(err.message || 'Falha ao enviar. Tente pelo WhatsApp.')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   return (
@@ -90,7 +107,7 @@ export default function App(){
       {/* PROOF */}
       <div className="proof">
         <div className="container proof-inner">
-          <span><strong>+60 projetos</strong> entregues</span>
+          <span><strong>Projetos entregues com</strong> confiança</span>
           <span>para empresas que <strong>automatizaram o operacional</strong></span>
           <span>com foco em <strong className="hl">performance e escalabilidade</strong></span>
         </div>
@@ -110,8 +127,8 @@ export default function App(){
                 </div>
               </div>
               <div className="p-body">
-                <h3>Sistema de Gestão de Colaboradores</h3>
-                <p><b>Problema:</b> planilhas caóticas. <b> Solução:</b> painel unificado com permissões por nível.</p>
+                <h3>Sistema de agendamento de eventos</h3>
+                <p><b>Problema:</b> marcação de eventos sem organização, com falta de planejamento e mais. <b> Solução:</b> sistema de agendamento externo e interno, com painel de controle, cadastro de usuarios, acompanhamento de solicitação, etc..</p>
                 <a href="#" className="p-link" onClick={e=>e.preventDefault()}>Ver case completo →</a>
               </div>
             </article>
@@ -123,8 +140,8 @@ export default function App(){
                 </div>
               </div>
               <div className="p-body">
-                <h3>API de Conciliação Financeira</h3>
-                <p><b>Problema:</b> fechamento manual. <b> Solução:</b> API que reconcilia 40k lançamentos/dia.</p>
+                <h3>Loja de Vendas Online</h3>
+                <p><b>Problema:</b> vendas por whatsapp, alta demanda de atendimento e entrega. <b> Solução:</b> Sistema de compras online, com pagamento confiável pelo Mercado Pago, gestão de pedidos, produtos e entregas.</p>
                 <a href="#" className="p-link" onClick={e=>e.preventDefault()}>Ver case completo →</a>
               </div>
             </article>
@@ -306,6 +323,7 @@ export default function App(){
             <p>Respondo em até 2h úteis. Ou chama direto no WhatsApp — converte mais rápido.</p>
 
             {sent && <div className="success">✅ Recebido! Te respondo em até 2h. Se for urgente, chama no WhatsApp.</div>}
+            {erro && <div className="success" style={{background:'rgba(239,68,68,.1)',borderColor:'rgba(239,68,68,.3)',color:'#FCA5A5'}}>{erro}</div>}
 
             <form onSubmit={handleSubmit}>
               <div className="form-grid two">
@@ -317,6 +335,11 @@ export default function App(){
                   <label>E-mail *</label>
                   <input type="email" placeholder="voce@empresa.com" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} />
                 </div>
+              </div>
+
+              <div className="field">
+                <label>Telefone / WhatsApp</label>
+                <input type="tel" placeholder="(61) 98409-2729" maxLength={20} value={form.telefone} onChange={e=>setForm({...form, telefone:e.target.value})} />
               </div>
 
               <div className="form-grid two">
@@ -349,8 +372,8 @@ export default function App(){
               </div>
 
               <div className="form-foot">
-                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}}>Enviar mensagem →</button>
-                <a href="https://wa.me/5511999999999?text=Olá%20Mayckon%2C%20quero%20um%20orçamento!" target="_blank" rel="noreferrer" className="wa-btn">💬 WhatsApp direto</a>
+                <button type="submit" className="btn-primary" style={{flex:1,padding:'12px'}} disabled={enviando}>{enviando ? 'Enviando…' : 'Enviar mensagem →'}</button>
+                <a href={waLink('Olá Mayckon, quero um orçamento!')} target="_blank" rel="noreferrer" className="wa-btn">💬 WhatsApp direto</a>
               </div>
               <div style={{fontSize:11,color:'#6B6B8A',marginTop:10,textAlign:'center'}}>Ao enviar você concorda em receber resposta por e-mail/WhatsApp.</div>
             </form>
