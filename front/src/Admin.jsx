@@ -514,8 +514,6 @@ function EditarLanding({ token }) {
               <input value={editDep[d.id]?.nome ?? d.nome} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], nome: e.target.value } })} placeholder="Nome" />
               <input value={editDep[d.id]?.cargo ?? d.cargo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], cargo: e.target.value } })} placeholder="Cargo · Empresa" />
             </div>
-            <input value={editDep[d.id]?.avatar_url ?? d.avatar_url ?? ''} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], avatar_url: e.target.value } })} placeholder="URL do avatar" />
-            <FotoUpload token={token} label="Avatar (ou cole a URL acima)" value="" onChange={(url) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], avatar_url: url } })} />
             <div className="edit-row">
               <input type="number" value={editDep[d.id]?.ordem ?? d.ordem} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ordem: Number(e.target.value) } })} title="Ordem" />
               <label className="check"><input type="checkbox" checked={editDep[d.id]?.ativo ?? d.ativo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ativo: e.target.checked } })} /> visível</label>
@@ -541,8 +539,6 @@ function EditarLanding({ token }) {
             <input value={novoDep.nome} onChange={(e) => setNovoDep({ ...novoDep, nome: e.target.value })} placeholder="Nome *" />
             <input value={novoDep.cargo} onChange={(e) => setNovoDep({ ...novoDep, cargo: e.target.value })} placeholder="Cargo · Empresa" />
           </div>
-          <input value={novoDep.avatar_url} onChange={(e) => setNovoDep({ ...novoDep, avatar_url: e.target.value })} placeholder="URL do avatar" />
-          <FotoUpload token={token} label="Avatar (ou cole a URL acima)" value="" onChange={(url) => setNovoDep({ ...novoDep, avatar_url: url })} />
           <button className="btn-primary sm" onClick={async () => {
             if (!novoDep.texto || !novoDep.nome) { alert('Texto e nome são obrigatórios'); return; }
             const criado = await api.criarDepoimento(token, novoDep);

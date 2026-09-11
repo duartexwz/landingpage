@@ -320,7 +320,7 @@ export default function App(){
               <div key={d.id} className="t-card">
                 <p>“{d.texto}”</p>
                 <div className="t-head">
-                  <div className="t-avatar">{d.avatar_url ? <img src={d.avatar_url} alt={d.nome}/> : d.nome.charAt(0)}</div>
+                  <div className="t-avatar">{(d.nome || '?').charAt(0)}</div>
                   <div><strong>{d.nome}</strong><span>{d.cargo}</span></div>
                 </div>
               </div>
