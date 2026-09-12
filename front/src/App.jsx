@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from './lib/api.js'
 import { waLink } from './lib/config.js'
-import fotoFallback from './assets/avatar-sobre.png'
 import './App.css'
 
 // Fallback caso a API esteja fora — mesmo conteúdo do seed do banco.
@@ -16,7 +15,8 @@ const FALLBACK_DEPS = [
   { id: 'd3', texto: 'A landing dobrou nossos leads qualificados na primeira quinzena.', nome: 'Paula Menezes', cargo: 'Fundadora · Karta' },
 ];
 const FALLBACK_BIO = { titulo: 'Lógica de engenharia,\nresultado de negócio.', texto: 'Acredito que todo processo repetitivo é um sistema esperando ser construído. Uso Python e arquitetura limpa para transformar dor operacional em software que escala — com medição, teste e deploy sem surpresas.', sub: 'Eficiência operacional através de automações, integrações e infraestrutura para operações que não podem parar.' };
-const FALLBACK_FOTO = fotoFallback;
+// Sem foto fixa no código: o avatar é definido pelo painel (/admin → Foto de perfil).
+const FALLBACK_FOTO = '';
 
 // Faixa de valor padrão para cada tipo de projeto — ao trocar o tipo,
 // o select de orçamento já carrega o valor correspondente.
@@ -240,7 +240,9 @@ export default function App(){
       <section id="sobre" className="section" style={{paddingTop:0}}>
         <div className="container about-grid">
           <div className="about-photo">
-            <img src={foto} alt="Mayckon - foto profissional"/>
+            {foto
+              ? <img src={foto} alt="Mayckon - foto profissional"/>
+              : <div className="about-initial">M</div>}
             <div className="about-floats" aria-hidden="true">
               <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="" loading="lazy" />
               <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="" loading="lazy" />
