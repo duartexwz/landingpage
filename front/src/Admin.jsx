@@ -345,6 +345,7 @@ function EditarLanding({ token }) {
   const [excluirProj, setExcluirProj] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
   const [msgProjeto, setMsgProjeto] = useState(null); // {modo:'criado'|'editado', titulo}
+  const [msgSite, setMsgSite] = useState(false);
   const [adicionando, setAdicionando] = useState(false);
 
   const carregarTudo = async () => {
@@ -364,19 +365,20 @@ function EditarLanding({ token }) {
   useEffect(() => { carregarTudo(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!excluirProj && !msgProjeto) return;
+    if (!excluirProj && !msgProjeto && !msgSite) return;
     document.body.style.overflow = 'hidden';
     const fechar = (e) => {
       if (e.key !== 'Escape' || excluindo || adicionando) return;
       setExcluirProj(null);
       setMsgProjeto(null);
+      setMsgSite(false);
     };
     window.addEventListener('keydown', fechar);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', fechar);
     };
-  }, [excluirProj, msgProjeto, excluindo, adicionando]);
+  }, [excluirProj, msgProjeto, msgSite, excluindo, adicionando]);
 
   const ok = (t) => { setMsg(`✅ ${t}`); setTimeout(() => setMsg(''), 2500); };
 
@@ -417,10 +419,13 @@ function EditarLanding({ token }) {
 
   const salvarSite = async () => {
     try {
-      await api.salvarSite(token, { bio, foto_url: foto });
-      setBioIni({ ...bio });
-      setFotoIni(foto);
-      ok('Landing atualizada!');
+      const site = await api.salvarSite(token, { bio, foto_url: foto });
+      setBio(site.bio || bio);
+      setFoto(site.foto_url || '');
+      setBioIni(site.bio || bio);
+      setFotoIni(site.foto_url || '');
+      try { localStorage.setItem('md_site', JSON.stringify(site)); } catch {}
+      setMsgSite(true);
     } catch (e) { setMsg(e.message); }
   };
 
@@ -602,6 +607,27 @@ function EditarLanding({ token }) {
               </button>
               <a className="btn-primary sm" href="/#portfolio" target="_blank" rel="noreferrer">
                 Ver na landing →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {msgSite && (
+        <div className="confirm-overlay" onClick={() => setMsgSite(false)}>
+          <div className="confirm-modal success" onClick={(e) => e.stopPropagation()}>
+            <div className="confirm-icon ok">✓</div>
+            <h3>Bio atualizada!</h3>
+            <p>
+              Sua bio e foto foram salvas e já valem no próximo carregamento
+              (o cache pode segurar a versão antiga por ~1 min).
+            </p>
+            <div className="confirm-actions">
+              <button className="btn-outline sm" onClick={() => setMsgSite(false)}>
+                Fechar
+              </button>
+              <a className="btn-primary sm" href="/#sobre" target="_blank" rel="noreferrer">
+                Ver no site →
               </a>
             </div>
           </div>
