@@ -29,6 +29,16 @@ const ORCAMENTO_POR_PROJETO = {
 };
 const FORM_INICIAL = {nome:'', email:'', telefone:'', projeto:'Desenvolvimento de APIs', orcamento: ORCAMENTO_POR_PROJETO['Desenvolvimento de APIs'], mensagem:''};
 
+// Conteúdo anterior (stale-while-revalidate): pinta instantâneo,
+// revalida em segundo plano. Cai para o fallback só na 1ª visita.
+const carregarSiteCache = ()=>{
+  try {
+    const s = JSON.parse(localStorage.getItem('md_site') || 'null');
+    if(!s || !Array.isArray(s.projetos) || !s.bio) return null;
+    return s;
+  } catch { return null; }
+};
+
 export default function App(){
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -38,7 +48,7 @@ export default function App(){
   const [sent, setSent] = useState(false)
   const [erro, setErro] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [site, setSite] = useState(null)
+  const [site, setSite] = useState(carregarSiteCache)
   const [caseAberto, setCaseAberto] = useState(null)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [fb, setFb] = useState({nome:'', cargo:'', texto:''})
@@ -47,7 +57,10 @@ export default function App(){
   const [fbEnviando, setFbEnviando] = useState(false)
 
   useEffect(()=>{
-    api.obterSite().then(setSite).catch(()=>{});
+    api.obterSite().then((s)=>{
+      setSite(s);
+      try { localStorage.setItem('md_site', JSON.stringify(s)); } catch {}
+    }).catch(()=>{});
   },[])
 
   const projetos = site?.projetos?.length ? site.projetos : FALLBACK_PROJETOS;

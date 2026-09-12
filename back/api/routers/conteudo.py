@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from psycopg import Connection
 
 from api.database import get_db
@@ -28,7 +28,11 @@ router = APIRouter(tags=['conteudo'])
 
 
 @router.get('/conteudo', summary='Conteúdo da landing (público)')
-def obter_site(db: T_Session):
+def obter_site(db: T_Session, response: Response):
+    # Cache na borda: F5 não acorda função nem banco (edits refletem em ~60s)
+    response.headers['Cache-Control'] = (
+        'public, max-age=0, s-maxage=60, stale-while-revalidate=300'
+    )
     return conteudo_services.obter_site(db)
 
 

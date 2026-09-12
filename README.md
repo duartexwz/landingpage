@@ -111,6 +111,8 @@ Rota `/admin`: login JWT → abas **Orçamentos** (leads, filtros, status, Whats
 cliente, excluir) e **Editar landing** (bio, foto, projetos com capa + galeria + case
 completo, depoimentos com aprovação de feedbacks). Exclusão de projeto usa modal de
 confirmação estilizada (sem `confirm()` nativo).
+Obs: `GET /api/conteudo` tem cache de borda (60s) + cache local com revalidação —
+edições no painel refletem no site em até ~1 minuto.
 
 ## Rotas da API
 
