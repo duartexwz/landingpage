@@ -525,15 +525,15 @@ function SkillBar({ nome, pct, dim }){
   );
 }
 
-const NIVEL_CSS = 70;
+const NIVEL_CSS = 90;
 
 const SKILLS = [
-  { nome: 'Python', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
+  { nome: 'Python', pct: '97%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
   { nome: 'PostgreSQL', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
-  { nome: 'HTML', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
+  { nome: 'HTML', pct: '95%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
   { nome: 'Vercel', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg', invert: true },
-  { nome: 'CSS', pct: '70%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
-  { nome: 'JavaScript', pct: '60%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
+  { nome: 'CSS', pct: '90%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
+  { nome: 'JavaScript', pct: '65%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
   { nome: 'React', pct: 'em aprendizado', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
 ];
 
@@ -564,10 +564,10 @@ function Habilidades(){
   return (
     <div className="skills-grid">
     <div className="skills-list">
-      <SkillBar nome="Python" pct={100} dim={dim('Python')} />
-      <SkillBar nome="FastAPI" pct={100} dim={dim('FastAPI')} />
+      <SkillBar nome="Python" pct={97} dim={dim('Python')} />
+      <SkillBar nome="FastAPI" pct={98} dim={dim('FastAPI')} />
       <SkillBar nome="PostgreSQL" pct={100} dim={dim('PostgreSQL')} />
-      <SkillBar nome="HTML" pct={100} dim={dim('HTML')} />
+      <SkillBar nome="HTML" pct={95} dim={dim('HTML')} />
       <SkillBar nome="Vercel" pct={100} dim={dim('Vercel')} />
       <SkillBar nome="CSS" pct={NIVEL_CSS} dim={dim('CSS')} />
       <div className="css-lab">
@@ -583,7 +583,7 @@ function Habilidades(){
         </div>
         <p className="css-lab-veredito">{veredito} <span>(eu: {NIVEL_CSS}%)</span></p>
       </div>
-      <SkillBar nome="JavaScript" pct={60} dim={dim('JavaScript')} />
+      <SkillBar nome="JavaScript" pct={65} dim={dim('JavaScript')} />
       <div className="skill-learn-row" style={dim('React') ? {opacity:.35} : undefined}>
         <span>React</span>
         <strong className="learn-badge"><i/>em aprendizado</strong>

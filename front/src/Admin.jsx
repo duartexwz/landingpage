@@ -313,11 +313,14 @@ function GaleriaUpload({ token, value = [], onChange, label = 'Imagens do case' 
         <div className="galeria-thumbs">
           {(value || []).map((u) => (
             <div key={u} className="galeria-thumb">
-              <img src={u} alt="case" />
+              <img src={u} alt="case" loading="lazy" />
               <button onClick={() => onChange((value || []).filter((x) => x !== u))} title="Remover">✕</button>
             </div>
           ))}
         </div>
+      )}
+      {(value || []).length > 4 && (
+        <span className="mono dim galeria-hint">← arraste para ver todas →</span>
       )}
       <label className="btn-outline sm file-btn">
         {up ? '⏳ Enviando…' : '📤 Adicionar imagens'}
