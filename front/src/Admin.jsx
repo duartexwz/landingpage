@@ -341,7 +341,7 @@ function EditarLanding({ token }) {
   const [editDep, setEditDep] = useState({});
   const [excluirProj, setExcluirProj] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
-  const [projCriado, setProjCriado] = useState(null);
+  const [msgProjeto, setMsgProjeto] = useState(null); // {modo:'criado'|'editado', titulo}
   const [adicionando, setAdicionando] = useState(false);
 
   const carregarTudo = async () => {
@@ -361,19 +361,19 @@ function EditarLanding({ token }) {
   useEffect(() => { carregarTudo(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!excluirProj && !projCriado) return;
+    if (!excluirProj && !msgProjeto) return;
     document.body.style.overflow = 'hidden';
     const fechar = (e) => {
       if (e.key !== 'Escape' || excluindo || adicionando) return;
       setExcluirProj(null);
-      setProjCriado(null);
+      setMsgProjeto(null);
     };
     window.addEventListener('keydown', fechar);
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', fechar);
     };
-  }, [excluirProj, projCriado, excluindo, adicionando]);
+  }, [excluirProj, msgProjeto, excluindo, adicionando]);
 
   const ok = (t) => { setMsg(`✅ ${t}`); setTimeout(() => setMsg(''), 2500); };
 
@@ -394,7 +394,7 @@ function EditarLanding({ token }) {
     });
     setProjetos((xs) => xs.map((x) => (x.id === p.id ? upd : x)));
     setEditProj(({ [p.id]: _drop, ...r }) => r);
-    ok('Projeto salvo!');
+    setMsgProjeto({ modo: 'editado', titulo: upd.titulo || m.titulo });
   };
 
   const confirmarExcluirProj = async () => {
@@ -447,7 +447,7 @@ function EditarLanding({ token }) {
       const criado = await api.criarProjeto(token, novoProj);
       setProjetos((xs) => [...xs, criado]);
       setNovoProj(PROJ_VAZIO);
-      setProjCriado(criado);
+      setMsgProjeto({ modo: 'criado', titulo: criado.titulo });
     } catch (e) {
       setMsg(e.message);
     } finally {
@@ -585,16 +585,16 @@ function EditarLanding({ token }) {
         </div>
       )}
 
-      {projCriado && (
-        <div className="confirm-overlay" onClick={() => setProjCriado(null)}>
+      {msgProjeto && (
+        <div className="confirm-overlay" onClick={() => setMsgProjeto(null)}>
           <div className="confirm-modal success" onClick={(e) => e.stopPropagation()}>
             <div className="confirm-icon ok">✓</div>
-            <h3>Projeto adicionado!</h3>
+            <h3>{msgProjeto.modo === 'criado' ? 'Projeto adicionado!' : 'Alterações salvas!'}</h3>
             <p>
-              <strong>“{projCriado.titulo}”</strong> já está visível no portfólio da landing.
+              <strong>“{msgProjeto.titulo}”</strong> {msgProjeto.modo === 'criado' ? 'já está visível no portfólio da landing.' : 'foi atualizado na landing.'}
             </p>
             <div className="confirm-actions">
-              <button className="btn-outline sm" onClick={() => setProjCriado(null)}>
+              <button className="btn-outline sm" onClick={() => setMsgProjeto(null)}>
                 Fechar
               </button>
               <a className="btn-primary sm" href="/#portfolio" target="_blank" rel="noreferrer">
