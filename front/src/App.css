@@ -388,6 +388,13 @@
   font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;
 }
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field select{
+  appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:38px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239B6BFF' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+}
+.field select option{background:#151532;color:#F1F1FF;padding:10px}
+.field select option:checked{background:rgba(155,107,255,.35);color:#fff}
 .field textarea{min-height:90px;resize:vertical}
 .form-foot{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px}
 .wa-btn{

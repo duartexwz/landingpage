@@ -95,6 +95,9 @@
 .lead-foot select:focus{border-color:#9B6BFF;outline:none}
 .danger.sm{color:#FCA5A5;border-color:rgba(239,68,68,.4)}
 
+.edit-card select,.admin-filtros select,.lead-foot select{cursor:pointer}
+.edit-card select option,.admin-filtros select option,.lead-foot select option{background:#151532;color:#fff}
+
 /* abas */
 .admin-tabs{display:flex;gap:8px;padding:0 22px 18px}
 .admin-tabs button{background:#151532;border:1px solid #2A2A4A;border-radius:999px;
