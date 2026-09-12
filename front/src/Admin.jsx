@@ -231,7 +231,7 @@ export default function Admin() {
 /* ================= EDITAR LANDING ================= */
 
 const PROJ_VAZIO = { titulo: '', problema: '', solucao: '', imagem_url: '', capa_url: '', imagens: [], link_url: '', como_foi_feito: '', estrutura_pastas: '', linguagens: '', ordem: 0, ativo: true };
-const DEP_VAZIO = { texto: '', nome: '', cargo: '', avatar_url: '', ordem: 0, ativo: true };
+const DEP_VAZIO = { texto: '', nome: '', cargo: '', ordem: 0, ativo: true };
 
 function FotoUpload({ token, value, onChange, label = 'Foto' }) {
   const [up, setUp] = useState(false);
@@ -537,7 +537,7 @@ function EditarLanding({ token }) {
               <label className="check"><input type="checkbox" checked={editDep[d.id]?.ativo ?? d.ativo} onChange={(e) => setEditDep({ ...editDep, [d.id]: { ...d, ...editDep[d.id], ativo: e.target.checked } })} /> visível</label>
               <button className="btn-primary sm" disabled={!editDep[d.id]} onClick={async () => {
                 const patch = editDep[d.id] || {};
-                const upd = await api.atualizarDepoimento(token, d.id, { texto: patch.texto ?? d.texto, nome: patch.nome ?? d.nome, cargo: patch.cargo ?? d.cargo, avatar_url: patch.avatar_url ?? d.avatar_url, ordem: patch.ordem ?? d.ordem, ativo: patch.ativo ?? d.ativo });
+                const upd = await api.atualizarDepoimento(token, d.id, { texto: patch.texto ?? d.texto, nome: patch.nome ?? d.nome, cargo: patch.cargo ?? d.cargo, ordem: patch.ordem ?? d.ordem, ativo: patch.ativo ?? d.ativo });
                 setDeps((xs) => xs.map((x) => (x.id === d.id ? upd : x)));
                 setEditDep(({ [d.id]: _drop2, ...r }) => r);
                 ok('Feedback salvo!');

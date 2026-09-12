@@ -24,6 +24,9 @@ dist-ssr/
 # --- uploads locais (dados de runtime, recriados via volume) ---
 back/uploads/*
 
+# --- testes locais (experimentos; remover antes de commitar) ---
+testes-locais/
+
 # --- editores e SO ---
 .vscode/
 .idea/

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from './lib/api.js'
 import { waLink } from './lib/config.js'
-import fotoFallback from './assets/WhatsApp Image 2026-08-29 at 15.46.44.jpeg'
+import fotoFallback from './assets/avatar-sobre.png'
 import './App.css'
 
 // Fallback caso a API esteja fora — mesmo conteúdo do seed do banco.
@@ -11,9 +11,9 @@ const FALLBACK_PROJETOS = [
   { id: 'f3', titulo: 'Landing de Captação', problema: 'conversão baixa.', solucao: 'página rápida que dobrou leads qualificados.', imagem_url: '' },
 ];
 const FALLBACK_DEPS = [
-  { id: 'd1', texto: 'O painel reduziu 90% do nosso trabalho manual de fechamento. Roda sozinho.', nome: 'Marina Costa', cargo: 'COO · Vetor Log', avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=60' },
-  { id: 'd2', texto: 'API enxuta e documentada. Integração levou dias, não meses.', nome: 'Diego Ramos', cargo: 'Head de Produto · Nuvem', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=60' },
-  { id: 'd3', texto: 'A landing dobrou nossos leads qualificados na primeira quinzena.', nome: 'Paula Menezes', cargo: 'Fundadora · Karta', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=60' },
+  { id: 'd1', texto: 'O painel reduziu 90% do nosso trabalho manual de fechamento. Roda sozinho.', nome: 'Marina Costa', cargo: 'COO · Vetor Log' },
+  { id: 'd2', texto: 'API enxuta e documentada. Integração levou dias, não meses.', nome: 'Diego Ramos', cargo: 'Head de Produto · Nuvem' },
+  { id: 'd3', texto: 'A landing dobrou nossos leads qualificados na primeira quinzena.', nome: 'Paula Menezes', cargo: 'Fundadora · Karta' },
 ];
 const FALLBACK_BIO = { titulo: 'Lógica de engenharia,\nresultado de negócio.', texto: 'Acredito que todo processo repetitivo é um sistema esperando ser construído. Uso Python e arquitetura limpa para transformar dor operacional em software que escala — com medição, teste e deploy sem surpresas.', sub: 'Eficiência operacional através de automações, integrações e infraestrutura para operações que não podem parar.' };
 const FALLBACK_FOTO = fotoFallback;
@@ -228,6 +228,14 @@ export default function App(){
         <div className="container about-grid">
           <div className="about-photo">
             <img src={foto} alt="Mayckon - foto profissional"/>
+            <div className="about-floats" aria-hidden="true">
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="" loading="lazy" />
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="" loading="lazy" />
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" alt="" loading="lazy" />
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="" loading="lazy" />
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="" loading="lazy" />
+              <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="" loading="lazy" />
+            </div>
           </div>
           <div className="about-content">
             <div className="eyebrow">(B) SOBRE MIM</div>
@@ -324,7 +332,6 @@ export default function App(){
               <div key={d.id} className="t-card">
                 <p>“{d.texto}”</p>
                 <div className="t-head">
-                  <div className="t-avatar">{(d.nome || '?').charAt(0)}</div>
                   <div><strong>{d.nome}</strong><span>{d.cargo}</span></div>
                 </div>
               </div>
@@ -525,14 +532,14 @@ function SkillBar({ nome, pct, dim }){
   );
 }
 
-const NIVEL_CSS = 90;
+const NIVEL_CSS = 85;
 
 const SKILLS = [
   { nome: 'Python', pct: '97%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg' },
-  { nome: 'PostgreSQL', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
-  { nome: 'HTML', pct: '95%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
-  { nome: 'Vercel', pct: '100%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg', invert: true },
-  { nome: 'CSS', pct: '90%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
+  { nome: 'PostgreSQL', pct: '85%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg' },
+  { nome: 'HTML', pct: '90%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg' },
+  { nome: 'Vercel', pct: '70%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vercel/vercel-original.svg', invert: true },
+  { nome: 'CSS', pct: '85%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg' },
   { nome: 'JavaScript', pct: '65%', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg' },
   { nome: 'React', pct: 'em aprendizado', src: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg' },
 ];
@@ -566,9 +573,9 @@ function Habilidades(){
     <div className="skills-list">
       <SkillBar nome="Python" pct={97} dim={dim('Python')} />
       <SkillBar nome="FastAPI" pct={98} dim={dim('FastAPI')} />
-      <SkillBar nome="PostgreSQL" pct={100} dim={dim('PostgreSQL')} />
-      <SkillBar nome="HTML" pct={95} dim={dim('HTML')} />
-      <SkillBar nome="Vercel" pct={100} dim={dim('Vercel')} />
+      <SkillBar nome="PostgreSQL" pct={85} dim={dim('PostgreSQL')} />
+      <SkillBar nome="HTML" pct={90} dim={dim('HTML')} />
+      <SkillBar nome="Vercel" pct={70} dim={dim('Vercel')} />
       <SkillBar nome="CSS" pct={NIVEL_CSS} dim={dim('CSS')} />
       <div className="css-lab">
         <label htmlFor="css-teste">🧪 Teste meu CSS — arraste e compare com meus {NIVEL_CSS}%</label>

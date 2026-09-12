@@ -18,7 +18,13 @@
 html{scroll-behavior:smooth}
 body{
   font-family:'Inter',system-ui,sans-serif;
-  background:var(--bg);
+  background:
+    radial-gradient(1100px 620px at 50% -8%, rgba(124,58,237,.28), transparent 62%),
+    radial-gradient(850px 620px at 102% 42%, rgba(34,211,238,.09), transparent 60%),
+    radial-gradient(950px 720px at -5% 88%, rgba(155,107,255,.16), transparent 62%),
+    radial-gradient(760px 480px at 50% 108%, rgba(124,58,237,.14), transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
   color:var(--text);
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
