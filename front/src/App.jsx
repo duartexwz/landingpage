@@ -388,9 +388,9 @@ export default function App(){
       <footer className="footer">
         <div className="container">
           <div className="footer-links">
-            <a href="https://github.com" target="_blank" rel="noreferrer">◧ GitHub</a>
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer">in LinkedIn</a>
-            <a href="mailto:ola@mayckon.dev">✉ ola@mayckon.dev</a>
+            <a href="https://github.com/duartexwz" target="_blank" rel="noreferrer">◧ GitHub</a>
+            <a href="https://www.linkedin.com/in/mayckon-dev" target="_blank" rel="noreferrer">in LinkedIn</a>
+            <a href="mailto:mayckonkennedy877@gmail.com">✉ mayckonkennedy877@gmail.com</a>
           </div>
           <div className="footer-copy">© 2026 mayckon.dev — Todos os direitos reservados.</div>
         </div>
@@ -423,7 +423,7 @@ export default function App(){
 
               <div className="field">
                 <label>Telefone / WhatsApp</label>
-                <input type="tel" placeholder="(61) 98409-2729" maxLength={20} value={form.telefone} onChange={e=>setForm({...form, telefone:e.target.value})} />
+                <input type="tel" placeholder="(00) 90000-0000" maxLength={20} value={form.telefone} onChange={e=>setForm({...form, telefone:e.target.value})} />
               </div>
 
               <div className="form-grid two">
